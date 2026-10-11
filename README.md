@@ -17,7 +17,7 @@ AKS에 결제 앱을 컨테이너로 배포하고 장애 재현·조사·복구�
 | [scripts/monitoring.sh](scripts/monitoring.sh) | 실패 경고/action group, Disabled 동적 경고, Kubernetes audit를 Bicep으로 생성 |
 | [scripts/provision-connection.sh](scripts/provision-connection.sh) | 선택 실습의 Grafana/Key Vault와 secret 접근 역할 생성 |
 | [scripts/scenario.sh](scripts/scenario.sh) | Deployment env 장애와 ImagePullBackOff 재현·정상 digest 복구 |
-| [scripts/export-agent-source.mjs](scripts/export-agent-source.mjs) | Agent에 제공할 런타임 코드만 별도 snapshot으로 생성 |
+| [scripts/export-agent-source.mjs](scripts/export-agent-source.mjs) | 선택적으로 런타임 코드 snapshot 생성 (Lab 7 연결에는 필요 없음) |
 | [scripts/traffic.mjs](scripts/traffic.mjs) | 카드/계좌 요청 실패율·p95 검증 |
 | [queries](queries) | App Insights/Kubernetes 로그·이벤트 조회 |
 | [tools](tools) | 측정값 통계와 Pod 상태 요약 Python 도구 (Lab 6-3·6-4 선택 실습) |
@@ -96,30 +96,25 @@ node scripts/traffic.mjs http://127.0.0.1:8080 20 healthy
 
 API와 provider는 별도 서버입니다. 실제 은행/DB나 고객 데이터는 사용하지 않습니다.
 
-## Agent에게 원인을 미리 알려 주지 않기
+## GitHub 저장소 연결
 
 런타임에는 장애 모드/시뮬레이션 switch, 인위적 sleep, 장애 이름의 로그·응답 필드가 없습니다.
 API는 일반 merchant/endpoint/timeout 설정을 사용하고 provider는 실제 카드 서명 연산을 합니다.
 리소스 이름/태그는 `rg-payment-*`, `aks-payment-*`, `application=payments`, namespace `payments`입니다.
 `healthy-image` 같은 Kubernetes annotation도 없으며 복구용 digest는 학습자 로컬 `artifacts/release-<cluster>.json`에만 있습니다.
 
-**이 README/HTML, tests, scenario.sh와 기존 Samples 저장소 이력은 학습자 전용입니다.**
-독립 진단 평가 Agent에 이를 업로드하거나 이 저장소 전체 Code Access를 허용하지 마세요.
-특정 파일 경로만 질문에 적는 것은 다른 파일을 읽지 못하게 하는 접근 제어가 아닙니다.
+Lab 7에서는 **Builder → Code Access → GitHub**에서 다음 저장소 전체를 읽기 권한으로 연결합니다.
+런타임 파일 추출이나 별도 코드 저장소 준비는 필요하지 않습니다.
 
-```bash
-node scripts/export-agent-source.mjs
+```text
+https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples
 ```
 
-출력된 `artifacts/source-<SHA>/`의 런타임 파일만 별도 코드 저장소에 넣어 연결하거나
-코드 연결 없이 실제 리소스·로그만으로 조사시킵니다. `release.json`에 원본 배포 SHA를 남깁니다.
-기존 Agent가 이전 문서/로그/메모리를 읽었다면 새 Agent/새 workspace/새 배포 환경을 사용하세요.
-이전 리소스·로그·Git 이력은 자동 삭제하지 않으며, “단서가 전혀 없다”는 결과를 보장하지 않습니다.
-직접 Agent의 조회 범위를 확인해야 합니다.
+Owner는 `Kimcheolhui`, Repository는 `Azure-SRE-Agent-Samples`, 기본 브랜치는 `main`입니다.
+앱 코드뿐 아니라 이 저장소의 문서·테스트·배포 스크립트도 연결 범위에 포함됩니다.
 
 원인을 알려 주지 않는 질문 예: “카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.”
 scenario 이름, 변경한 변수/값, 예상 RCA나 복구 명령은 질문에 넣지 않습니다.
-Skill/Hook/메모리 기능 실습은 독립 진단 평가와 별도의 Agent에서 수행하는 것을 권장합니다.
 
 ## Lab 3 이후 반복 가능한 Azure 설정
 
@@ -159,9 +154,8 @@ bash scripts/deploy.sh rg-payment-private-kch01x7 \
   aks-payment-private-kch01x7 acrpaymentprivatekch01x7 eastus2 private --infra-only
 ```
 
-코드 연결에는 실제 `/version`의 전체 SHA로
-`node scripts/export-agent-source.mjs "$SOURCE_COMMIT"`을 실행합니다.
-로컬 Git에 해당 revision이 없으면 명시적으로 실패하며 HEAD로 대체하지 않습니다.
+코드 연결은 Lab 7에서 Samples 저장소 전체로 진행합니다.
+배포 코드 대조에는 실제 `/version`의 SHA를 사용하며 최신 `main`과 동일하다고 가정하지 않습니다.
 Lab 13에는 검증한 공식 templates 버전과 recipe/export/diff/clone/verify 명령이 있습니다.
 새 Agent의 실제 배포와 DR은 유료 선택 단계입니다.
 

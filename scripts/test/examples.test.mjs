@@ -140,7 +140,7 @@ test("Agent creation includes concrete names, separate observability and neutral
     assert.ok(setup.includes(text), `Missing explicit creation choice: ${text}`);
   }
   assert.ok(setup.includes("payment-telemetry Secret에 넣지 않습니다"));
-  assert.ok(setup.includes("scenario.sh·예상 RCA를 연결/업로드하지 않습니다"));
+  assert.ok(setup.includes("코드 연결은 Lab 7에서 Samples 저장소 전체를 대상으로 진행합니다"));
   assert.ok(setup.includes("이번 구성에서는 <strong>Anthropic을 사용</strong>"));
   assert.ok(setup.includes("개별 모델이나 모델 deployment 이름을 선택하지 않습니다"));
   assert.ok(setup.includes('Model provider</td><td><strong>Anthropic</strong>'));
@@ -336,6 +336,22 @@ test("Lab 6 Python tools are optional with a skippable dependent PostToolUse exe
   assert.ok(hook?.includes("도구를 만든 경우에만 진행하는 선택 실습"));
   assert.ok(hook.includes("PostToolUse 실습도 건너뛰고"));
   assert.ok(hook.includes("Stop Hook만 확인·Disable"));
+});
+
+test("Lab 7 connects the entire Samples repository without requiring a runtime-only export", () => {
+  const lab = html.split('<section id="lab7">')[1]?.split("</section>")[0];
+  assert.ok(lab);
+  for (const text of ["Azure-SRE-Agent-Samples 저장소 전체", "Agent → Builder → Code Access → GitHub",
+    "<pre><code>https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples</code></pre>",
+    "Owner <code>Kimcheolhui</code>", "Repository <code>Azure-SRE-Agent-Samples</code>",
+    "Kimcheolhui/Azure-SRE-Agent-Samples", "읽기 권한", "실제 배포 SHA"]) {
+    assert.ok(lab.includes(text), `Missing full repository connection instruction: ${text}`);
+  }
+  assert.ok(!/export-agent-source|런타임 전용|snapshot|별도 저장소에/.test(lab));
+  assert.ok(!html.includes("이 Samples 저장소 전체를 Code Access로 연결하지 않습니다"));
+  const readme = readFileSync(new URL("../../README.md", import.meta.url), "utf8");
+  assert.ok(readme.includes("이 저장소의 문서·테스트·배포 스크립트도 연결 범위에 포함"));
+  assert.ok(!readme.includes("이 저장소 전체 Code Access를 허용하지 마세요"));
 });
 
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
