@@ -75,7 +75,7 @@ test("initial logs setup distinguishes inherited access, workload sources and Ag
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
     "같은 RG에 있는 LAW와 App Insights는 이 역할을 상속",
     "LAW가 다른 RG에 있으면", "workspace access mode",
-    "Agent의 실제 tool result", "Agent 자체 감사 데이터와 workload 데이터를 구분"]) {
+    "Agent의 실제 tool result"]) {
     assert.ok(setup?.includes(text), `Missing logs setup distinction: ${text}`);
   }
   assert.ok(setup.includes("API key가 필요하다고 임의로 가정"));
@@ -84,6 +84,10 @@ test("initial logs setup distinguishes inherited access, workload sources and Ag
   assert.ok(setup.includes("Log Analytics Reader/Monitoring Reader 자동 할당"));
   assert.ok(setup.includes("Configure logging provider"));
   assert.ok(setup.includes("Add connector"));
+  const queryPrompt = setup.match(/<pre class="prompt"><code>리소스 변경 없이 다음 원본을 실제 조회해 줘\.([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.ok(queryPrompt);
+  assert.ok(!queryPrompt.includes("Agent 자체 감사 데이터"));
+  assert.ok(!queryPrompt.includes("정상 서비스로 표현하지"));
 });
 
 test("integrated practice output contains record format rather than grading", () => {

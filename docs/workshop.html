@@ -152,8 +152,7 @@ Log Analytics: law-aks-payment-kch01x7
 Application Insights: appi-aks-payment-kch01x7
 Azure 리소스 그룹: rg-payment-kch01x7
 최근30분 payments namespace의 Pod inventory와 결제 요청을 확인하고,
-사용한 원본·UTC·쿼리와 성공/실패 결과를 보여 줘.
-Agent 자체 감사 데이터와 workload 데이터를 구분해 줘.</code></pre>
+사용한 원본·UTC·쿼리와 성공/실패 결과를 보여 줘.</code></pre>
 <p>LAW 자체에 상속된 Log Analytics Reader가 있다면 workspace 권한이 이미 적용된 것입니다. workspace access mode 때문에 반드시 직접 역할을 다시 할당해야 한다고 해석하지 않습니다. 단순 리소스 Reader만 가진 경우와 LAW에 대한 로그 query 권한이 있는 경우를 구분합니다.</p>
 <p>workspace query는 <code>KubePodInventory / ContainerLogV2 / AppRequests</code>, App Insights resource query는 <code>requests / dependencies / exceptions</code>를 사용합니다. 로그 연결이 기존 앱의 connection string을 바꾸거나 데이터를 Agent용 workspace로 옮기는 것은 아닙니다.</p>
 <p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-and-set-up">빠른 시작 로그 연결/자동 역할 할당</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/log-analytics-app-insights">Log Analytics와 App Insights 연결</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/permissions">RG 추가 권한</a><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/manage-access">LAW 접근과 scope</a></p>
