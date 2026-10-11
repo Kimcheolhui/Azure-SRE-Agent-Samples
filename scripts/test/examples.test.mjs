@@ -80,6 +80,10 @@ test("initial logs setup distinguishes inherited access, workload sources and Ag
   }
   assert.ok(setup.includes("API key가 필요하다고 임의로 가정"));
   assert.ok(setup.includes("로그 ‘권장’ 표시"));
+  assert.ok(setup.includes("로그 카드도 권한을 할당합니다"));
+  assert.ok(setup.includes("Log Analytics Reader/Monitoring Reader 자동 할당"));
+  assert.ok(setup.includes("Configure logging provider"));
+  assert.ok(setup.includes("Add connector"));
 });
 
 test("integrated practice output contains record format rather than grading", () => {

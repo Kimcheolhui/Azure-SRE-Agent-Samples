@@ -56,10 +56,12 @@ Agent 이름에는 `sre-`, 리소스 그룹에는 `rg-` 접두사를 사용하�
 평가 전에는 코드·지식·인시던트·예약 연결을 추가하지 않고 실제 읽기 조회를 먼저 확인합니다.
 Azure 리소스에서 RG를 Reader로 성공적으로 추가하면 같은 RG의 LAW/App Insights에
 Log Analytics Reader/Monitoring Reader 등 상속 권한이 적용됩니다. 실제 실행 UAMI의 IAM 역할은 확인해야 합니다.
-초기 **로그 +** 카드는 조사 원본을 지정하는 별도 설정으로,
+초기 **로그 +** 카드는 원본 지정뿐 아니라 저장 시 필요한 Log Analytics Reader/Monitoring Reader 역할도 자동 할당합니다.
+Configure logging provider → Log Analytics Workspace → Next에서
 `law-aks-payment-kch01x7`과 현재 지원되는 경우 `appi-aks-payment-kch01x7`을 선택합니다.
 Agent 생성 시 자동 생성한 감사용 App Insights/LAW를 workload 로그 원본으로 대신 선택하지 않습니다.
-로그 카드 표시와 query 권한은 동일하지 않으며 다른 RG의 workspace, access mode/네트워크, 별도 connector 신원을 구분합니다.
+동일 RG에 이미 권한이 있으면 역할 효과는 겹칠 수 있습니다. 실제 연결 관리 ID와 적용 scope/저장 결과를 확인합니다.
+로그 카드 표시와 실제 query 성공은 다르므로 다른 RG의 workspace, access mode/네트워크, 별도 connector 신원을 구분합니다.
 Pod 접근에는 Agent 실행 UAMI의 AKS credential 역할과 `payments` namespace data-plane Reader가 별도로 필요합니다.
 
 ## 로컬 실행
