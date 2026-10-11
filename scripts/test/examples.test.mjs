@@ -392,6 +392,14 @@ test("email lab separates a connection test from an actual incident analysis ema
     "Email requests must not leak the injected cause or scenario-control name");
 });
 
+test("Lab 13 is absent from content, navigation, outputs and progress", () => {
+  assert.ok(!/id="lab13"|href="#lab13"|data-check="lab13"|data-output-for="lab13"|id="output-lab13"|Lab 13/.test(html));
+  assert.ok(html.includes('<section id="lab12">'));
+  assert.ok(html.includes('<section id="cleanup">'));
+  assert.equal([...html.matchAll(/data-check="/g)].length, 17);
+  assert.equal([...html.matchAll(/data-output-for="/g)].length, 17);
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",

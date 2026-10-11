@@ -23,7 +23,7 @@ AKS에 결제 앱을 컨테이너로 배포하고 장애 재현·조사·복구�
 | [tools](tools) | 측정값 통계와 Pod 상태 요약 Python 도구 (Lab 6-3·6-4 선택 실습) |
 | [operations](operations) | 운영 문서, Skill, 선택적 incident report 양식 |
 
-본문·18개 결과 예시와105개 주제 설명은 오프라인에서 읽을 수 있습니다.
+본문·17개 결과 예시와105개 주제 설명은 오프라인에서 읽을 수 있습니다.
 MS Learn 공식 이미지15개는 원본 URL을 사용하므로 인터넷이 필요합니다.
 확대/원문 보기와 실패 안내를 제공하며 출처는 [image-sources.json](docs/image-sources.json)에 있습니다.
 공식 화면은 이 실습을 수행한 증거가 아니므로 실제 결과와 구분하세요.
@@ -161,8 +161,6 @@ bash scripts/deploy.sh rg-payment-private-kch01x7 \
 
 코드 연결은 Lab 7에서 Samples 저장소 전체로 진행합니다.
 배포 코드 대조에는 실제 `/version`의 SHA를 사용하며 최신 `main`과 동일하다고 가정하지 않습니다.
-Lab 13에는 검증한 공식 templates 버전과 recipe/export/diff/clone/verify 명령이 있습니다.
-새 Agent의 실제 배포와 DR은 유료 선택 단계입니다.
 
 ## Azure AKS 배포
 

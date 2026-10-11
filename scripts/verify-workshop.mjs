@@ -42,7 +42,7 @@ assert.ok(!/data-score=|data-rubric=|data-safety=/.test(markup), "Learner gradin
 assert.ok(!ids.includes("outputs"), "Removed result index must not be present");
 assert.ok(!/data-covers=|data-exercise=/.test(markup) && !ids.includes("coverage"),
   "Source mappings must not be present");
-const outputTasks = ["foundation", ...Array.from({ length: 14 }, (_, index) => `lab${index}`),
+const outputTasks = ["foundation", ...Array.from({ length: 13 }, (_, index) => `lab${index}`),
   "judgment", "capstone", "cleanup"];
 const outputs = [...markup.matchAll(/data-output-for="([^"]+)"/g)].map(match => match[1]);
 assert.equal(outputs.length, outputTasks.length, "Expected one output example per task");
@@ -69,7 +69,7 @@ for (const [, attributes, contents] of figures) {
     `Image fallback or zoom missing: ${id}`);
 }
 const checks = [...markup.matchAll(/data-check="([^"]+)"/g)].map((match) => match[1]);
-assert.equal(checks.length, 18);
+assert.equal(checks.length, outputTasks.length);
 assert.equal(checks.length, new Set(checks).size);
 for (const [, source] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
   new Script(source);

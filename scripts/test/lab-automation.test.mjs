@@ -87,9 +87,9 @@ test("alert and audit templates use real measurable signals and dedicated tables
     "The service rejects resolveConfiguration together with autoMitigate");
 });
 
-test("every Lab 3–13 has an actionable Agent input, and lifecycle commands are concrete", () => {
+test("every Lab 3–12 has an actionable Agent input and Lab 13 is removed", () => {
   const html = read("docs/workshop.html");
-  for (let lab = 3; lab <= 13; lab++) {
+  for (let lab = 3; lab <= 12; lab++) {
     const section = html.split(`<section id="lab${lab}">`)[1]?.split("</section>")[0]
       ?.split('<details class="result-example"')[0];
     assert.ok(/<pre class="prompt"(?: id="[^"]+")?><code>/.test(section ?? ""), `Missing Agent input for Lab ${lab}`);
@@ -97,9 +97,7 @@ test("every Lab 3–13 has an actionable Agent input, and lifecycle commands are
   assert.ok(html.includes('bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts'));
   assert.ok(html.includes('bash scripts/monitoring.sh "$RG" "$CLUSTER" audit'));
   assert.ok(html.includes('private --infra-only'));
-  assert.ok(html.includes('--recipe minimal'));
-  assert.ok(!html.includes("&lt;RECIPE&gt;"));
-  for (const command of ["bash bin/export-agent.sh", "bash bin/diff-agent.sh",
-    "bash bin/clone-agent.sh", "bash bin/verify-agent.sh"]) assert.ok(html.includes(command));
+  assert.ok(!/id="lab13"|href="#lab13"|data-check="lab13"|data-output-for="lab13"/.test(html));
+  assert.ok(!html.includes("bash bin/clone-agent.sh"));
   assert.ok(html.includes("Title contains는 커넥터 수집 범위를 줄이지 않습니다"));
 });
