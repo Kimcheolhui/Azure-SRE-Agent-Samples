@@ -1,13 +1,14 @@
 {
-  "name": "sre-payment-workshop",
+  "name": "payment-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Deterministic payment incidents for an isolated Azure SRE Agent workshop",
+  "description": "Payment request processing and provider authorization",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "start": "node src/server.js",
+    "start:provider": "node src/provider-server.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {

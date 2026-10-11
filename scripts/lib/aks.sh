@@ -3,8 +3,8 @@
 validate_target() {
   RG=$1
   CLUSTER=$2
-  if [[ ! "$RG" =~ ^rg-sre-workshop-[a-z0-9-]+$ || ! "$CLUSTER" =~ ^aks-sre-[a-z0-9-]+$ ]]; then
-    echo "Use a dedicated rg-sre-workshop-* group and aks-sre-* cluster." >&2
+  if [[ ! "$RG" =~ ^rg-payment-[a-z0-9-]+$ || ! "$CLUSTER" =~ ^aks-payment-[a-z0-9-]+$ ]]; then
+    echo "Use a dedicated rg-payment-* group and aks-payment-* cluster." >&2
     return 2
   fi
   for tool in az kubectl kubelogin node; do
@@ -12,11 +12,11 @@ validate_target() {
   done
 }
 
-require_workshop_group() {
+require_payment_group() {
   local tag
-  tag=$(az group show --name "$RG" --query tags.workshop -o tsv)
-  if [[ "$tag" != "azure-sre-agent" ]]; then
-    echo "Resource group must have workshop=azure-sre-agent tag." >&2
+  tag=$(az group show --name "$RG" --query tags.application -o tsv)
+  if [[ "$tag" != "payments" ]]; then
+    echo "Resource group must have application=payments tag." >&2
     return 2
   fi
 }

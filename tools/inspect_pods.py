@@ -2,7 +2,7 @@ import json
 
 
 def main(pods_json: str) -> dict:
-    """Summarize caller-provided PodList from the fixed workshop namespace."""
+    """Summarize caller-provided PodList from the fixed payments namespace."""
     document = json.loads(pods_json)
     if not isinstance(document, dict) or document.get("kind") != "PodList":
         raise ValueError("Provide kubectl get pods -o json output with kind PodList")
@@ -14,8 +14,8 @@ def main(pods_json: str) -> dict:
         if not isinstance(pod, dict):
             raise ValueError("Each Pod must be an object")
         metadata = pod.get("metadata", {})
-        if metadata.get("namespace") != "sre-workshop":
-            raise ValueError("Only sre-workshop namespace measurements are accepted")
+        if metadata.get("namespace") != "payments":
+            raise ValueError("Only payments namespace measurements are accepted")
         statuses = pod.get("status", {}).get("containerStatuses", [])
         result.append({
             "pod": metadata.get("name"),

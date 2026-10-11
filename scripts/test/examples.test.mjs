@@ -35,7 +35,7 @@ test("Hook rejection has a nonempty reason and private AKS output is explicitly 
 test("AKS instructions use Kubernetes scopes, immutable image and reconnect after rollout", () => {
   assert.ok(html.includes("ImagePullBackOff"));
   assert.ok(html.includes("Azure Kubernetes Service RBAC Writer"));
-  assert.ok(html.includes("$CLUSTER_ID/namespaces/sre-workshop"));
+  assert.ok(html.includes("$CLUSTER_ID/namespaces/payments"));
   assert.ok(html.includes("port-forward"));
   assert.ok(html.includes("digest"));
   assert.ok(!/App Service|az webapp|Website Contributor|appsettings|app settings|read_workshop_version/.test(html));

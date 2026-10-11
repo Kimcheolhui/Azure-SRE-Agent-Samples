@@ -12,11 +12,11 @@ spec.loader.exec_module(module)
 class PodInspectionTests(unittest.TestCase):
     def test_reports_ready_and_image_pull_failure_separately(self):
         result = module.main(json.dumps({"kind": "PodList", "items": [
-            {"metadata": {"name": "old", "namespace": "sre-workshop"},
+            {"metadata": {"name": "old", "namespace": "payments"},
              "status": {"phase": "Running", "containerStatuses": [
                  {"name": "payment-api", "ready": True, "restartCount": 0,
                   "imageID": "example@sha256:abc", "state": {"running": {}}}]}},
-            {"metadata": {"name": "new", "namespace": "sre-workshop"},
+            {"metadata": {"name": "new", "namespace": "payments"},
              "status": {"phase": "Pending", "containerStatuses": [
                  {"name": "payment-api", "ready": False, "restartCount": 0,
                   "state": {"waiting": {"reason": "ImagePullBackOff"}}}]}}

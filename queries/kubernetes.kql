@@ -1,16 +1,16 @@
 // Run each query separately in law-<cluster> > Logs.
 KubePodInventory
-| where TimeGenerated > ago(30m) and Namespace == "sre-workshop"
+| where TimeGenerated > ago(30m) and Namespace == "payments"
 | summarize arg_max(TimeGenerated, *) by Name, ContainerName
 | project TimeGenerated, Name, PodStatus, ContainerName, ContainerStatus, ContainerRestartCount, Computer
 
 ContainerLogV2
-| where TimeGenerated > ago(30m) and PodNamespace == "sre-workshop"
+| where TimeGenerated > ago(30m) and PodNamespace == "payments"
 | where ContainerName == "payment-api"
 | project TimeGenerated, PodName, LogSource, LogMessage
 | order by TimeGenerated desc
 
 KubeEvents
-| where TimeGenerated > ago(30m) and Namespace == "sre-workshop"
+| where TimeGenerated > ago(30m) and Namespace == "payments"
 | project TimeGenerated, Name, Reason, Message, KubeEventType
 | order by TimeGenerated desc

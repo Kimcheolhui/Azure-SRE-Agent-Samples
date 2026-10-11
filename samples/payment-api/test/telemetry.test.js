@@ -8,6 +8,7 @@ const { spawn, execFileSync } = require("node:child_process");
 const { mkdtempSync, readFileSync, rmSync, rmdirSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { gunzipSync } = require("node:zlib");
+const { createProvider } = require("../src/provider");
 
 test("real SDK exports request, dependency and exception envelopes to a local collector", { timeout: 45000 }, async (t) => {
   const envelopes = [];
@@ -39,6 +40,9 @@ test("real SDK exports request, dependency and exception envelopes to a local co
   });
   await new Promise((resolve) => collector.listen(0, "127.0.0.1", resolve));
   t.after(() => new Promise((resolve) => collector.close(resolve)));
+  const provider = createProvider({ signatureIterations: 60000 });
+  await new Promise(resolve => provider.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise(resolve => { provider.close(resolve); provider.closeAllConnections(); }));
   for (const scenario of ["healthy", "payment-exception"]) {
     let output = "";
     let stderr = "";
@@ -46,7 +50,8 @@ test("real SDK exports request, dependency and exception envelopes to a local co
       env: {
         ...process.env,
         PORT: "0",
-        SRE_SCENARIO: scenario,
+        CARD_MERCHANT_ACCOUNT: scenario === "healthy" ? "merchant-card" : "",
+        PAYMENT_PROVIDER_URL: `http://127.0.0.1:${provider.address().port}`,
         SOURCE_COMMIT: "sdk-export-test",
         APPLICATIONINSIGHTS_STATSBEAT_DISABLED: "true",
         NODE_EXTRA_CA_CERTS: certFile,
@@ -81,12 +86,13 @@ test("real SDK exports request, dependency and exception envelopes to a local co
     assert.ok(envelopes.some((item) => item.data.baseType === type),
       `Missing ${type}; exported types=${envelopes.map((item) => item.data.baseType)}; ${diagnostics.join("\n")}`);
   }
-  assert.equal(envelopes.filter((item) => item.data.baseType === "RequestData").length, 3);
+  assert.equal(envelopes.filter((item) => item.data.baseType === "RequestData").length, 2);
   assert.equal(envelopes.filter((item) => item.data.baseType === "RemoteDependencyData").length, 1);
   assert.equal(envelopes.filter((item) => item.data.baseType === "ExceptionData").length, 1);
   const request = envelopes.find((item) => item.data.baseType === "RequestData" && item.data.baseData.name === "GET /pay");
   assert.equal(request.data.baseData.properties.paymentMethod, "card");
   assert.equal(request.data.baseData.properties.sourceCommit, "sdk-export-test");
   assert.match(request.data.baseData.properties.traceId, /^[0-9a-f]{32}$/);
-  assert.equal(request.tags["ai.cloud.role"], "sre-payment-api");
+  assert.equal(request.tags["ai.cloud.role"], "payment-api");
+  assert.ok(!/workshop|scenario|simulation/i.test(JSON.stringify(envelopes)));
 });

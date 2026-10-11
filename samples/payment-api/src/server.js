@@ -15,7 +15,6 @@ app.listen(config.port, "0.0.0.0", () => {
   console.log(JSON.stringify({
     event: "server_started",
     port: app.address().port,
-    scenario: config.scenario,
     sourceCommit: config.commit
   }));
 });

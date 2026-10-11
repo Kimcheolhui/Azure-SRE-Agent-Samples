@@ -1,95 +1,63 @@
 "use strict";
-
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { performance } = require("node:perf_hooks");
-const { createApp } = require("../src/app");
+const { fixture } = require("./helpers");
 const { loadConfig } = require("../src/config");
 
-async function fixture(t, scenario) {
-  const events = { requests: [], dependencies: [], exceptions: [] };
-  const telemetry = {
-    request: (item) => events.requests.push(item),
-    dependency: (item) => events.dependencies.push(item),
-    exception: (item) => events.exceptions.push(item)
-  };
-  const server = createApp({ ...loadConfig({ PORT: "0" }), scenario, commit: "abc1234" }, telemetry);
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  t.after(() => new Promise((resolve) => {
-    server.close(resolve);
-    server.closeIdleConnections();
-  }));
-  return { events, base: `http://127.0.0.1:${server.address().port}` };
-}
-
-test("healthy card and bank payments emit request and dependency evidence", async (t) => {
-  const { base, events } = await fixture(t, "healthy");
+test("card and bank payments use a separate HTTP provider with neutral evidence", async t => {
+  const { base, events } = await fixture(t);
   for (const method of ["card", "bank"]) {
     const response = await fetch(`${base}/pay?method=${method}`);
-    assert.equal(response.status, 200);
     const body = await response.json();
+    assert.equal(response.status, 200);
     assert.equal(body.paid, true);
     assert.equal(body.sourceCommit, "abc1234");
     assert.equal(body.podName, "local");
+    assert.ok(!/scenario|workshop|simulat|fault/i.test(JSON.stringify(body)));
   }
   assert.equal(events.dependencies.length, 2);
-  assert.ok(events.dependencies.every((item) => item.success));
-  assert.equal(events.requests.filter((item) => item.name === "GET /pay").length, 2);
+  assert.ok(events.dependencies.every(item => item.success && item.name === "POST /authorize"));
+  assert.equal(events.requests.length, 2);
+  assert.ok(!/scenario|workshop|simulat|fault/i.test(JSON.stringify(events)));
 });
 
-test("dependency-slow measurably delays only card payments", async (t) => {
-  const { base, events } = await fixture(t, "dependency-slow");
-  const started = performance.now();
-  const card = await fetch(`${base}/pay?method=card`);
-  await card.json();
-  assert.equal(card.status, 200);
-  assert.ok(performance.now() - started >= 1700);
-  const bankStarted = performance.now();
-  const bank = await fetch(`${base}/pay?method=bank`);
-  await bank.json();
-  assert.equal(bank.status, 200);
-  assert.ok(performance.now() - bankStarted < 1000);
-  assert.ok(events.dependencies[0].duration >= 1700);
+test("provider signature cost measurably delays card, not bank", async t => {
+  const { base, events } = await fixture(t, { iterations: 16000000 });
+  assert.equal((await fetch(`${base}/pay?method=card`)).status, 200);
+  assert.equal((await fetch(`${base}/pay?method=bank`)).status, 200);
+  assert.ok(events.dependencies[0].duration >= 1000);
   assert.ok(events.dependencies[1].duration < 1000);
 });
 
-test("payment-exception records evidence while bank remains healthy", async (t) => {
-  const { base, events } = await fixture(t, "payment-exception");
+test("missing card merchant records a real configuration error, bank still succeeds", async t => {
+  const { base, events } = await fixture(t, { cardMerchant: "" });
   assert.equal((await fetch(`${base}/pay?method=card`)).status, 500);
   assert.equal((await fetch(`${base}/pay?method=bank`)).status, 200);
-  assert.equal(events.exceptions.length, 1);
-  assert.match(events.exceptions[0].exception.message, /WORKSHOP_PAYMENT_CONFIG_ERROR/);
+  assert.equal(events.exceptions[0].exception.name, "PaymentConfigurationError");
+  assert.match(events.exceptions[0].exception.message, /Merchant account is not configured/);
   assert.equal(events.dependencies.length, 1);
 });
 
-test("unavailable affects health and both payment methods", async (t) => {
-  const { base } = await fixture(t, "unavailable");
-  for (const path of ["/health", "/pay?method=card", "/pay?method=bank"]) {
-    assert.equal((await fetch(`${base}${path}`)).status, 503);
-  }
-  assert.equal((await fetch(`${base}/version`)).status, 200);
+test("stopped provider gives actual dependency failure while process health remains available", async t => {
+  const { base, events, provider } = await fixture(t);
+  await new Promise(resolve => { provider.close(resolve); provider.closeAllConnections(); });
+  for (const method of ["card", "bank"]) assert.equal((await fetch(`${base}/pay?method=${method}`)).status, 503);
+  for (const path of ["/health", "/version"]) assert.equal((await fetch(`${base}${path}`)).status, 200);
+  assert.ok(events.dependencies.every(item => !item.success && item.resultCode === "0"));
 });
 
-test("Pod readiness identity is separate from injected business unavailability", async (t) => {
-  const { base } = await fixture(t, "unavailable");
-  const response = await fetch(`${base}/version`);
-  const body = await response.json();
-  assert.equal(response.status, 200);
-  assert.equal(body.namespace, "local");
-  assert.equal((await fetch(`${base}/health`)).status, 503);
-});
-
-test("invalid input is explicit and HTTP cannot change fault configuration", async (t) => {
-  const { base } = await fixture(t, "healthy");
+test("invalid requests are rejected and there is no control endpoint", async t => {
+  const { base } = await fixture(t);
   for (const query of ["method=crypto", "amount=-1", "amount=NaN", "amount=1000001"]) {
     assert.equal((await fetch(`${base}/pay?${query}`)).status, 400);
   }
-  assert.equal((await fetch(`${base}/admin/fault?scenario=unavailable`)).status, 404);
+  assert.equal((await fetch(`${base}/admin/fault`)).status, 404);
   assert.equal((await fetch(`${base}/pay`, { method: "POST" })).status, 405);
 });
 
-test("configuration rejects unknown scenarios and invalid ports", () => {
-  assert.throws(() => loadConfig({ SRE_SCENARIO: "typo" }), /Unsupported/);
+test("startup rejects invalid provider configuration without accepting scenario switches", () => {
   assert.throws(() => loadConfig({ PORT: "-1" }), /PORT/);
-  assert.equal(loadConfig({}).scenario, "healthy");
+  assert.throws(() => loadConfig({ PAYMENT_PROVIDER_URL: "file:///etc/passwd" }), /PAYMENT_PROVIDER_URL/);
+  assert.throws(() => loadConfig({ PROVIDER_REQUEST_TIMEOUT_MS: "0" }), /TIMEOUT/);
+  assert.ok(!("scenario" in loadConfig({})));
 });

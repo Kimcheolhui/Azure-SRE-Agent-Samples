@@ -2,16 +2,15 @@
 requests
 | where timestamp > ago(30m) and name == "GET /pay"
 | extend method = tostring(customDimensions.paymentMethod),
-         scenario = tostring(customDimensions.scenario),
          commit = tostring(customDimensions.sourceCommit),
          pod = tostring(customDimensions.podName)
 | summarize count=count(), failures=countif(success == false),
             p95Ms=percentile(duration / 1ms, 95)
-  by bin(timestamp, 1m), method, scenario, commit, pod
+  by bin(timestamp, 1m), method, commit, pod
 | order by timestamp asc
 
 dependencies
-| where timestamp > ago(30m) and name == "GET /provider"
+| where timestamp > ago(30m) and name == "POST /authorize"
 | extend method = tostring(customDimensions.paymentMethod),
          traceId = tostring(customDimensions.traceId)
 | project timestamp, name, target, duration, success, resultCode, method, traceId, customDimensions
@@ -28,7 +27,7 @@ requests
 | extend traceId=tostring(customDimensions.traceId)
 | join kind=leftouter (
     dependencies
-    | where timestamp > ago(30m) and name == "GET /provider"
+    | where timestamp > ago(30m) and name == "POST /authorize"
     | extend traceId=tostring(customDimensions.traceId)
     | project traceId, dependencyDuration=duration, dependencySuccess=success
   ) on traceId
@@ -39,7 +38,7 @@ requests
 // Use this block in Log Analytics > Logs (workspace context), not the blocks above.
 AppRequests
 | where TimeGenerated > ago(30m) and Name == "GET /pay"
-| extend method=tostring(Properties.paymentMethod), scenario=tostring(Properties.scenario)
+| extend method=tostring(Properties.paymentMethod)
 | summarize count=count(), failures=countif(Success == false),
-            p95Ms=percentile(DurationMs, 95) by bin(TimeGenerated, 1m), method, scenario
+            p95Ms=percentile(DurationMs, 95) by bin(TimeGenerated, 1m), method
 | order by TimeGenerated asc

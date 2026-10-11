@@ -11,10 +11,11 @@ AKS에 결제 앱을 컨테이너로 배포하고 장애 재현·조사·복구�
 | [docs/workshop.html](docs/workshop.html) | AKS/Portal/CLI 설정, 실제 결과 예시, 공식 이미지, 복구·정리 |
 | [infra/main.bicep](infra/main.bicep) | AKS, ACR, VNet, 관리 ID/RBAC, Log Analytics, App Insights |
 | [k8s/workload.yaml](k8s/workload.yaml) | namespace, 2-replica Deployment, ClusterIP Service |
-| [samples/payment-api](samples/payment-api) | Node.js 22 앱 + Dockerfile + 실제 loopback provider |
+| [samples/payment-api](samples/payment-api) | 별도 API/provider HTTP 서비스, Dockerfile |
 | [scripts/deploy.sh](scripts/deploy.sh) | ACR remote build, SHA→digest 고정, Secret 주입과 rollout |
 | [scripts/connect.sh](scripts/connect.sh) | 전용 kubeconfig에 Entra/Azure CLI 로그인 연결 |
 | [scripts/scenario.sh](scripts/scenario.sh) | Deployment env 장애와 ImagePullBackOff 재현·정상 digest 복구 |
+| [scripts/export-agent-source.mjs](scripts/export-agent-source.mjs) | Agent에 제공할 런타임 코드만 별도 snapshot으로 생성 |
 | [scripts/traffic.mjs](scripts/traffic.mjs) | 카드/계좌 요청 실패율·p95 검증 |
 | [queries](queries) | App Insights/Kubernetes 로그·이벤트 조회 |
 | [tools](tools) | 측정값 통계와 Pod 상태 요약 Python 도구 |
@@ -37,14 +38,46 @@ npm test
 npm start
 ```
 
-별도 터미널의 저장소 루트에서:
+다른 터미널에서 provider도 실행합니다.
+
+```bash
+cd Azure-SRE-Agent-Samples/samples/payment-api
+npm run start:provider
+```
+
+그다음 저장소 루트에서:
 
 ```bash
 node scripts/traffic.mjs http://127.0.0.1:8080 20 healthy
 ```
 
-서버를 Ctrl+C로 종료하고 `SRE_SCENARIO=dependency-slow npm start`처럼 다시 시작하면
-로컬 앱 장애도 재현할 수 있습니다. 실제 은행/DB나 고객 데이터는 사용하지 않습니다.
+API와 provider는 별도 서버입니다. 실제 은행/DB나 고객 데이터는 사용하지 않습니다.
+
+## Agent에게 원인을 미리 알려 주지 않기
+
+런타임에는 장애 모드/시뮬레이션 switch, 인위적 sleep, 장애 이름의 로그·응답 필드가 없습니다.
+API는 일반 merchant/endpoint/timeout 설정을 사용하고 provider는 실제 카드 서명 연산을 합니다.
+리소스 이름/태그는 `rg-payment-*`, `aks-payment-*`, `application=payments`, namespace `payments`입니다.
+`healthy-image` 같은 Kubernetes annotation도 없으며 복구용 digest는 학습자 로컬 `artifacts/release-<cluster>.json`에만 있습니다.
+
+**이 README/HTML, tests, scenario.sh와 기존 Samples 저장소 이력은 학습자 전용입니다.**
+독립 진단 평가 Agent에 이를 업로드하거나 이 저장소 전체 Code Access를 허용하지 마세요.
+특정 파일 경로만 질문에 적는 것은 다른 파일을 읽지 못하게 하는 접근 제어가 아닙니다.
+
+```bash
+node scripts/export-agent-source.mjs
+```
+
+출력된 `artifacts/source-<SHA>/`의 런타임 파일만 별도 코드 저장소에 넣어 연결하거나
+코드 연결 없이 실제 리소스·로그만으로 조사시킵니다. `release.json`에 원본 배포 SHA를 남깁니다.
+기존 Agent가 이전 문서/로그/메모리를 읽었다면 새 Agent/새 workspace/새 배포 환경을 사용하세요.
+이전 리소스·로그·Git 이력은 자동 삭제하지 않으며, “단서가 전혀 없다”는 결과를 보장하지 않습니다.
+직접 Agent의 조회 범위를 확인해야 합니다.
+
+원인을 알려 주지 않는 질문 예: “AKS <ID>, payments namespace에서 카드 결제가 느리다는 보고가 있다.
+<UTC 구간>의 원인과 영향을 조사하고 조회 근거/미확인 사항을 구분해 줘.”
+scenario 이름, 변경한 변수/값, 예상 RCA나 복구 명령은 질문에 넣지 않습니다.
+Skill/Hook/메모리 기능 실습은 독립 진단 평가와 별도의 Agent에서 수행하는 것을 권장합니다.
 
 ## Azure AKS 배포
 
@@ -57,13 +90,13 @@ SRE Agent에는 별도의 namespace-scoped 읽기/쓰기 권한을 설정합니�
 ```bash
 az login
 az account set --subscription "<YOUR_SUBSCRIPTION_ID>"
-export RG=rg-sre-workshop-kch01x7
-export CLUSTER=aks-sre-kch01x7
-export ACR=acrsrekch01x7
+export RG=rg-payment-kch01x7
+export CLUSTER=aks-payment-kch01x7
+export ACR=acrpaymentkch01x7
 bash scripts/deploy.sh "$RG" "$CLUSTER" "$ACR" eastus2
 bash scripts/connect.sh "$RG" "$CLUSTER"
 export KUBECONFIG="$PWD/artifacts/kubeconfig-$CLUSTER"
-kubectl -n sre-workshop port-forward service/payment-api 8080:8080
+kubectl -n payments port-forward service/payment-api 8080:8080
 ```
 
 이름의 접미사는 고유한 소문자/숫자로 바꿉니다. 특히 ACR 이름은 전역 고유이고 하이픈 없이 지정합니다.
@@ -103,20 +136,22 @@ Service port-forward는 한 Pod에 연결되므로 전체 replica 부하 분산�
 | 시나리오 | 관측 |
 |---|---|
 | `healthy` | 카드/계좌200, 각 p95≤1000ms |
-| `dependency-slow` | 카드 provider1800ms 대기, 계좌 정상 |
+| `dependency-slow` | provider SIGNATURE_ITERATIONS 증가로 실제 PBKDF2 CPU 계산량/카드 지연 증가 |
 | `payment-exception` | 카드500 + 명시적 예외, 계좌200 |
-| `unavailable` | 카드·계좌·health503, version200 |
+| `unavailable` | provider replica0 → 실제 HTTP 의존 호출 실패로 카드·계좌503, API health/version200 |
 | `image-pull-failure` | 새 Pod ErrImagePull/ImagePullBackOff; 기존 정상 Pod는 유지될 수 있음 |
 
-`image-pull-failure`는 Kubernetes 전용이고 앱의 SRE_SCENARIO 값이 아닙니다.
-`scenario.sh ... healthy`는 저장한 정상 digest와 healthy env를 복원합니다.
+위 이름들은 **학습자 스크립트 인자**일 뿐 워크로드에 저장되지 않습니다.
+카드 오류는 merchant 설정 누락, 의존 중단은 provider replica0으로 만듭니다.
+이미지 실패는 없는40자리 tag를 사용하고 fault/missing이라는 이름을 붙이지 않습니다.
+`scenario.sh ... healthy`는 로컬 release artifact digest, merchant 값, provider 연산 설정/replica를 복원합니다.
 Deployment 2 updated/available replicas와 실제20쌍 요청(실패0, 각 p95≤1000)을 모두 확인합니다.
 `rollout undo`는 Deployment revision만 바꾸고 Secret 값을 복원하지 않습니다.
 probes는 `/version`으로 프로세스를 확인합니다. Pod Ready는 결제 성공 보장이 아닙니다.
 
 ## 진단과 권한
 
-앱 telemetry에는 `paymentMethod`, `scenario`, `sourceCommit`, `traceId`, `podName`, `namespace`가 있습니다.
+앱 telemetry에는 `paymentMethod`, `sourceCommit`, `traceId`, `podName`, `namespace`만 있고 scenario 정답 필드는 없습니다.
 `/version`과 Deployment image, Pod imageID digest, GitHub 배포 SHA 코드를 대조합니다.
 App Insights requests/dependencies/exceptions와 ContainerLogV2/KubePodInventory/KubeEvents는 다른 데이터입니다.
 Kubernetes API 변경은 AKS audit diagnostics로 확인하고 Azure Activity Log와 혼동하지 않습니다.

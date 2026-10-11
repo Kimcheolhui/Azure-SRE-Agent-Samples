@@ -15,14 +15,12 @@ function createTelemetry(config) {
   const client = new insights.TelemetryClient(config.connectionString, { useGlobalProviders: false });
   client.config.azureMonitorOpenTelemetryOptions = {
     resource: resourceFromAttributes({
-      "service.name": "sre-payment-api",
+      "service.name": "payment-api",
       "service.instance.id": config.podName || "local"
     })
   };
   client.commonProperties = {
     sourceCommit: config.commit,
-    scenario: config.scenario,
-    workshop: "azure-sre-agent",
     podName: config.podName || "local",
     namespace: config.namespace || "local"
   };

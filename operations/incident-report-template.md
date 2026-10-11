@@ -1,11 +1,10 @@
-# Workshop incident record
+# Payment incident record
 
 - Resource ID:
 - UTC symptom start / end:
 - Deployed source commit:
 - AKS cluster / namespace / Deployment:
 - Pod names / imageID digest / revision / readiness:
-- Fault scenario:
 - Card count / failure rate / p95:
 - Bank count / failure rate / p95:
 - Dependency evidence and query window:

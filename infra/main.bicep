@@ -147,7 +147,7 @@ resource pullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 resource deployerAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(cluster.id, deployerObjectId, 'workshop-deployer')
+  name: guid(cluster.id, deployerObjectId, 'deployment-owner')
   scope: cluster
   properties: {
     principalId: deployerObjectId
@@ -179,13 +179,13 @@ resource containerLogs 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
     }
     destinations: {
       logAnalytics: [
-        { name: 'workshopLogs', workspaceResourceId: workspace.id }
+        { name: 'paymentLogs', workspaceResourceId: workspace.id }
       ]
     }
     dataFlows: [
       {
         streams: ['Microsoft-ContainerInsights-Group-Default']
-        destinations: ['workshopLogs']
+        destinations: ['paymentLogs']
       }
     ]
   }

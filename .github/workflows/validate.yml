@@ -28,6 +28,9 @@ jobs:
             const config=require("./src/config").loadConfig();
             assert.equal(config.commit,process.env.SOURCE_COMMIT);
             assert.match(config.commit,/^[0-9a-f]{40}$/);
+            const provider=require("./src/provider").createProvider({signatureIterations:60000});
+            provider.listen(0,"127.0.0.1",()=>{
+            config.providerUrl=`http://127.0.0.1:${provider.address().port}`;
             const server=require("./src/app").createApp(config,{request(){},dependency(){},exception(){}});
             server.listen(0,"127.0.0.1",async()=>{
               try{
@@ -35,10 +38,13 @@ jobs:
                 assert.equal(response.status,200);
                 assert.equal((await response.json()).paid,true);
               }catch(error){console.error(error);process.exitCode=1;}
-              finally{server.close();server.closeAllConnections();}
+              finally{server.close();server.closeAllConnections();provider.close();provider.closeAllConnections();}
+            });
             });
           '
       - run: node scripts/verify-workshop.mjs
       - run: node --test scripts/test/*.test.mjs
+      - name: Verify isolated Agent source snapshot
+        run: node scripts/export-agent-source.mjs
       - run: python3 -m unittest discover -s tools/tests -v
       - run: bash -n scripts/deploy.sh scripts/scenario.sh scripts/connect.sh scripts/lib/aks.sh
