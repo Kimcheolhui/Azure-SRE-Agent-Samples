@@ -460,18 +460,32 @@ cleanup: 실습 경고 Disabled / payment-failure-review Off</code></pre>
 <h3>4-2. Azure Managed Grafana 만들기 — 심화</h3>
 <p>Grafana는 유료 선택 실습입니다. 리소스 생성은 Bicep으로 하고 로그인·대시보드·인증 동의만 화면에서 진행합니다.</p>
 <pre><code>bash scripts/provision-connection.sh grafana "$SUFFIX" "$LOCATION"</code></pre>
-<ol class="steps"><li><span class="path">Portal → Azure Managed Grafana → <code>amg-sre-kch01x7</code></span>전용 RG <code>rg-payment-grafana-kch01x7</code>, Standard tier, 관리 ID, service account 사용 설정을 확인합니다.</li><li>Grafana 관리 ID에 workload RG의 로그·모니터링 읽기 권한, 자신의 계정에 Grafana Admin을 부여합니다. 이미 적용된 역할은 IAM에서 확인하고 중복 추가하지 않습니다.
-<pre><code>GRAFANA_PRINCIPAL=$(az grafana show -g "rg-payment-grafana-$SUFFIX" -n "amg-sre-$SUFFIX" --query identity.principalId -o tsv)
-GRAFANA_ID=$(az grafana show -g "rg-payment-grafana-$SUFFIX" -n "amg-sre-$SUFFIX" --query id -o tsv)
-WORKLOAD_RG_ID=$(az group show -n "$RG" --query id -o tsv)
+<p>생성 스크립트는 Grafana 리소스만 만듭니다. <strong>Grafana 사용자 역할과 관리 ID의 로그 조회 역할은 아래에서 별도로 부여</strong>해야 합니다. Azure RG의 Owner/Contributor가 있어도 Grafana 화면 접근 권한이 자동으로 생기는 것은 아닙니다. Endpoint를 열기 전에 다음 순서대로 진행합니다.</p>
+<ol class="steps"><li><span class="path">Portal → Azure Managed Grafana → <code>amg-sre-kch01x7</code></span>전용 RG <code>rg-payment-grafana-kch01x7</code>, Standard tier, Provisioning Succeeded, 관리 ID와 service account 사용 설정을 확인합니다.</li>
+<li id="grafana-user-access"><strong>자신의 계정에 Grafana Admin 부여:</strong> 로컬 터미널에서 먼저 로그인 계정과 기존 역할을 확인합니다. 이 계정은 Grafana를 열 때 브라우저에서 로그인할 계정과 같아야 합니다. 다른 접미사를 썼다면 아래 두 리소스 이름을 바꿉니다.
+<pre><code>GRAFANA_ID=$(az resource show -g rg-payment-grafana-kch01x7 \
+  -n amg-sre-kch01x7 --resource-type Microsoft.Dashboard/grafana \
+  --api-version 2023-09-01 --query id -o tsv)
 USER_PRINCIPAL=$(az ad signed-in-user show --query id -o tsv)
+az ad signed-in-user show --query userPrincipalName -o tsv
+az role assignment list --assignee "$USER_PRINCIPAL" --scope "$GRAFANA_ID" \
+  --include-inherited --include-groups \
+  --query "[?roleDefinitionName=='Grafana Admin' || roleDefinitionName=='Grafana Editor' || roleDefinitionName=='Grafana Viewer'].{role:roleDefinitionName,scope:scope}" \
+  -o table</code></pre>
+<p>목록에 적용된 <strong>Grafana Admin</strong>이 없다면 아래 명령을 직접 실행합니다. Viewer는 화면 열기, Editor는 대시보드 편집용이며, 이번 실습의 service account/token 관리에는 Admin을 사용합니다. 역할은 구독 전체가 아니라 <strong>이 Grafana 인스턴스 하나</strong>에만 부여합니다. 실행 계정에는 이 scope의 Owner/User Access Administrator 등 역할 할당 권한이 필요합니다.</p>
+<pre><code>az role assignment create --assignee-object-id "$USER_PRINCIPAL" \
+  --assignee-principal-type User --role "Grafana Admin" --scope "$GRAFANA_ID"</code></pre>
+<p><strong>No Grafana Role Assigned</strong> 화면은 로그인 계정의 Grafana 역할이 없거나 아직 전파되지 않았을 때 나타납니다. 새 인스턴스에서는 전파에 최대 1시간 걸릴 수 있습니다. 위 목록을 다시 조회해 역할이 있는지 확인한 뒤 브라우저에서 로그아웃·재로그인하거나 새 비공개 창으로 같은 계정에 로그인합니다. 계속 오류가 나면 <span class="path">Portal → amg-sre-kch01x7 → Access control (IAM) → Role assignments</span>에서 실제 사용자와 scope를 확인합니다. 역할이 이미 있다면 중복 추가하거나 인스턴스를 다시 만들지 않습니다.</p>
+</li><li><strong>Grafana 관리 ID의 데이터 조회 권한:</strong> 이는 위 사용자 접근 권한과 별개입니다. workload RG의 로그·모니터링 Reader를 부여합니다. 이미 적용된 역할은 IAM에서 확인하고 중복 추가하지 않습니다.
+<pre><code>GRAFANA_PRINCIPAL=$(az resource show -g "rg-payment-grafana-$SUFFIX" \
+  -n "amg-sre-$SUFFIX" --resource-type Microsoft.Dashboard/grafana \
+  --api-version 2023-09-01 --query identity.principalId -o tsv)
+WORKLOAD_RG_ID=$(az group show -n "$RG" --query id -o tsv)
 az role assignment create --assignee-object-id "$GRAFANA_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal --role "Log Analytics Reader" --scope "$WORKLOAD_RG_ID"
 az role assignment create --assignee-object-id "$GRAFANA_PRINCIPAL" \
-  --assignee-principal-type ServicePrincipal --role "Monitoring Reader" --scope "$WORKLOAD_RG_ID"
-az role assignment create --assignee-object-id "$USER_PRINCIPAL" \
-  --assignee-principal-type User --role "Grafana Admin" --scope "$GRAFANA_ID"</code></pre>
-</li><li><span class="path">Managed Grafana → Overview → Endpoint → Grafana UI → Connections → Data sources</span>Azure Monitor data source에서 Managed Identity 인증과 workload 구독을 선택해 Save &amp; test합니다.</li><li><span class="path">Grafana → Dashboards → New → New dashboard → Add visualization</span>Azure Monitor → Logs에서 <code>law-aks-payment-kch01x7</code>를 선택합니다. 다음 query를 Time series 형식으로 넣고 제목 <code>Payment p95 by method</code>를 지정합니다.<pre><code>AppRequests
+  --assignee-principal-type ServicePrincipal --role "Monitoring Reader" --scope "$WORKLOAD_RG_ID"</code></pre>
+</li><li><span class="path">Managed Grafana → Overview → Endpoint → Grafana UI → Connections → Data sources</span><strong>사용자 역할 전파 후</strong> Grafana를 엽니다. Azure Monitor data source에서 Managed Identity 인증과 workload 구독을 선택해 Save &amp; test합니다. 화면 접속 성공과 data source query 성공을 각각 확인합니다.</li><li><span class="path">Grafana → Dashboards → New → New dashboard → Add visualization</span>Azure Monitor → Logs에서 <code>law-aks-payment-kch01x7</code>를 선택합니다. 다음 query를 Time series 형식으로 넣고 제목 <code>Payment p95 by method</code>를 지정합니다.<pre><code>AppRequests
 | where $__timeFilter(TimeGenerated) and Name == "GET /pay"
 | extend method=tostring(Properties.paymentMethod)
 | summarize p95Ms=percentile(DurationMs, 95) by bin(TimeGenerated, 1m), method
