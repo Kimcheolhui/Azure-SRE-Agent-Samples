@@ -159,6 +159,27 @@ test("Agent creation includes concrete names, separate observability and neutral
   assert.ok(!/Azure-SRE-Agent-Samples에서.*코드.*조회/.test(setup));
 });
 
+test("Portal resource names use the filled suffix while terminal commands keep variables", () => {
+  const prose = html.replace(/<pre\b[\s\S]*?<\/pre>|<script\b[\s\S]*?<\/script>/g, "");
+  for (const [, path] of prose.matchAll(/<span class="path">([\s\S]*?)<\/span>/g)) {
+    assert.ok(!/\$[A-Z_]+/.test(path), "Portal paths must not contain shell variables");
+  }
+  const inlineCodes = [...prose.matchAll(/<code>([\s\S]*?)<\/code>/g)].map(([, code]) => code);
+  assert.ok(!inlineCodes.some(code => /^(?:[a-z0-9-]*\$(?:SUFFIX|CLUSTER|ACR|RG))\b/.test(code)),
+    "UI resource names must be fully specified");
+  for (const name of ["ag-payments-kch01x7", "payment-failures-kch01x7",
+    "payment-latency-dynamic-kch01x7", "rg-payment-grafana-kch01x7",
+    "amg-sre-kch01x7", "payments-kch01x7", "kv-sre-kch01x7",
+    "rg-payment-keyvault-kch01x7", "vnet-aks-payment-kch01x7"]) {
+    assert.ok(inlineCodes.includes(name), `Missing complete UI resource name: ${name}`);
+  }
+  const lab3 = html.split('<section id="lab3">')[1]?.split("</section>")[0];
+  assert.ok(lab3?.includes('이름 <code>ag-payments-kch01x7</code>, display name <code>sre-lab</code>, 리소스 그룹 <code>rg-payment-kch01x7</code>'));
+  assert.ok(html.includes('export CLUSTER="aks-payment-$SUFFIX"'));
+  assert.ok(html.includes('bash scripts/deploy.sh "$RG" "$CLUSTER" "$ACR" "$LOCATION"'));
+  assert.ok(html.includes('az monitor data-collection rule show -g "$RG" -n "dcr-$CLUSTER"'));
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
