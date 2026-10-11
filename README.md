@@ -83,7 +83,7 @@ Service port-forward는 한 Pod에 연결되므로 전체 replica 부하 분산�
 
 ## 리소스와 비용
 
-- AKS Standard control-plane tier, Linux `Standard_D4s_v5` 노드3대, Azure CNI Overlay.
+- AKS Standard control-plane tier, Linux `Standard_D4s_v6` 노드3대, Azure CNI Overlay.
 - ACR Standard(admin disabled), kubelet identity의 AcrPull, digest 고정 이미지.
 - VNet `10.70.0.0/16`: AKS node subnet `/24`, Agent용 별도 `/27` 위임 subnet.
 - App Insights/Log Analytics30일 보존, Container Insights addon + 명시적 DCR/association과 로그 수집 identity 역할.
@@ -94,8 +94,9 @@ Service port-forward는 한 Pod에 연결되므로 전체 replica 부하 분산�
 - AKS 지원 버전은 생성 시 서비스가 선택하며, 지역의 VM availability/vCPU quota를 먼저 확인하세요.
 
 노드 기본 용량은 합계12 vCPU/48GiB 메모리입니다. 노드 업데이트의 surge 용량도 고려해 구독 quota를 확인하세요.
-이미 실습 클러스터를 만들었다면 같은 이름으로 `deploy.sh`를 다시 실행해 IaC 구성을 적용할 수 있습니다.
-이 명령은 이미지 빌드와 워크로드 재배포도 수행하므로 기존 장애 상태와 변경을 먼저 확인하세요.
+기존 클러스터의 동일한 node pool에 다른 VM 크기를 지정하는 재배포는 지원되지 않습니다.
+기존 pool이 다른 VM 크기로 생성됐다면 새 v6 node pool로 이전하거나 새 이름의 실습 클러스터를 만드세요.
+`deploy.sh`는 이미지 빌드와 워크로드 재배포도 수행하므로 기존 장애 상태와 변경을 먼저 확인하세요.
 
 ## 장애와 복구
 

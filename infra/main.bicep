@@ -6,7 +6,7 @@ param clusterName string
 param registryName string
 param deployerObjectId string
 param location string = resourceGroup().location
-param nodeVmSize string = 'Standard_D4s_v5'
+param nodeVmSize string = 'Standard_D4s_v6'
 param privateCluster bool = false
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {

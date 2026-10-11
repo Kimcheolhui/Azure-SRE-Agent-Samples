@@ -129,13 +129,14 @@ test("infrastructure and workshop use Standard tiers and three adequately sized 
   const readme = readFileSync(join(root, "README.md"), "utf8");
   assert.ok(infrastructure.includes("sku: { name: 'Base', tier: 'Standard' }"));
   assert.ok(infrastructure.includes("sku: { name: 'Standard' }"));
-  assert.ok(infrastructure.includes("param nodeVmSize string = 'Standard_D4s_v5'"));
+  assert.ok(infrastructure.includes("param nodeVmSize string = 'Standard_D4s_v6'"));
   assert.ok(infrastructure.includes("count: 3"));
-  assert.ok(workshop.includes("Standard tier · D4s_v5×3"));
+  assert.ok(workshop.includes("Standard tier · D4s_v6×3"));
+  assert.ok(readme.includes("`Standard_D4s_v6` 노드3대"));
   assert.ok(workshop.includes("합계12 vCPU/48GiB"));
   assert.ok(readme.includes("합계12 vCPU/48GiB"));
   assert.ok(readme.includes("ACR Standard"));
   for (const content of [infrastructure, workshop, readme]) {
-    assert.ok(!/tier: 'Free'|AKS Free|ACR Basic|Standard_D2s_v5|D2s_v5×1/.test(content));
+    assert.ok(!/tier: 'Free'|AKS Free|ACR Basic|Standard_D[24]s_v5|D[24]s_v5×[13]/.test(content));
   }
 });
