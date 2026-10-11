@@ -168,7 +168,7 @@ test("Portal resource names use the filled suffix while terminal commands keep v
   assert.ok(!inlineCodes.some(code => /^(?:[a-z0-9-]*\$(?:SUFFIX|CLUSTER|ACR|RG))\b/.test(code)),
     "UI resource names must be fully specified");
   for (const name of ["ag-payments-kch01x7", "payment-failures-kch01x7",
-    "payment-latency-dynamic-kch01x7", "rg-payment-grafana-kch01x7",
+    "rg-payment-grafana-kch01x7",
     "amg-sre-kch01x7", "payments-kch01x7", "kv-sre-kch01x7",
     "rg-payment-keyvault-kch01x7", "vnet-aks-payment-kch01x7"]) {
     assert.ok(inlineCodes.includes(name), `Missing complete UI resource name: ${name}`);
@@ -183,7 +183,7 @@ test("Portal resource names use the filled suffix while terminal commands keep v
 });
 
 test("response plan setup specifies the matching values without prescribing investigation steps", () => {
-  const setup = html.match(/<h3 id="response-plan-setup">([\s\S]*?)<h3>/)?.[1];
+  const setup = html.match(/<h3 id="response-plan-setup">([\s\S]*?)(?=<h3\b)/)?.[1];
   assert.ok(setup, "Response plan setup requires a linkable section");
   assert.ok(setup.includes('<table id="response-plan-values">'));
   for (const text of ["payment-failure-review", "payment-failures-kch01x7",
@@ -211,6 +211,26 @@ test("response plan setup specifies the matching values without prescribing inve
   assert.ok(setup.includes("도구 상속과 Azure 접근 권한은 별개"));
   const instructions = setup.match(/<pre class="prompt" id="response-handler-instructions"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
   assert.ok(instructions?.includes("원인과 서비스에 미치는 영향 범위"));
+});
+
+test("Lab 3 focuses on alert routing and keeps recovery and shutdown after the investigation", () => {
+  const lab = html.split('<section id="lab3">')[1]?.split("</section>")[0];
+  assert.ok(lab);
+  assert.ok(!/HTTP Trigger|payment-manual-trigger|trigger-payload|TRIGGER_URL|동적|monitoring\.sh.*dynamic/.test(lab));
+  const cleanup = lab.split('<h3 id="lab3-cleanup">')[1];
+  assert.ok(cleanup, "Lab 3 must retain a final cleanup section");
+  for (const text of ['bash scripts/scenario.sh "$RG" "$CLUSTER" healthy',
+    "kubectl -n payments port-forward service/payment-api 8080:8080",
+    'node scripts/traffic.mjs "$APP_URL" 20 healthy', "Resolved",
+    "payment-failure-review", "<strong>Off</strong>", "--set properties.enabled=false"]) {
+    assert.ok(cleanup.includes(text), `Missing recovery/shutdown step: ${text}`);
+  }
+  assert.ok(cleanup.indexOf('scenario.sh "$RG" "$CLUSTER" healthy') < cleanup.indexOf("--set properties.enabled=false"),
+    "The alert must be disabled only after service recovery");
+  assert.ok(lab.includes('cleanup: 실습 경고 Disabled / payment-failure-review Off'));
+  assert.ok(html.includes('https://learn.microsoft.com/en-us/azure/sre-agent/http-triggers'));
+  assert.ok(html.includes('https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-dynamic-thresholds'),
+    "Concept references should remain outside the removed Lab 3 exercises");
 });
 
 test("Custom Agent instruction examples meet the 50-character minimum without diagnostic coaching", () => {

@@ -129,13 +129,14 @@ AKS를 다시 배포하지 않습니다.
 ```bash
 bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts --what-if
 bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts
-bash scripts/monitoring.sh "$RG" "$CLUSTER" dynamic
 bash scripts/monitoring.sh "$RG" "$CLUSTER" audit
 ```
 
 - 실패 경고는 LAW의 `FailedRequests > 5`, 5분 window/1분 평가, Sev2, 자동 해제입니다.
 - 같은 이름의 action group이 있으면 수신자를 유지합니다. 새 그룹은 이메일/Webhook 없이 만듭니다.
-- 동적 경고는 AKS가 아닌 App Insights의 `requests/duration`을 사용하며 기본 Disabled입니다.
+- Lab 3은 Azure Monitor 경고 → response plan → Custom Agent 조사 경로만 실습합니다.
+- HTTP Trigger와 동적 임계값 실습은 제외합니다. 동적 경고용 Bicep/스크립트는 참고용으로 유지하며 기본 Disabled입니다.
+- 조사 후 정상 복구와 경고 Resolved를 확인한 뒤, 실습 경고를 Disabled와 response plan을 Off로 종료합니다.
 - audit는 `AKSAuditAdmin`에 저장합니다. 설정 이전 변경은 소급 수집되지 않습니다.
 - Azure Monitor 경고 수집은 구독 범위입니다. 관리 RG의 조사 권한과 response plan의 선택 필터는 별개입니다.
 

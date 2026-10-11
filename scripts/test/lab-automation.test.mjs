@@ -92,7 +92,7 @@ test("every Lab 3–13 has an actionable Agent input, and lifecycle commands are
   for (let lab = 3; lab <= 13; lab++) {
     const section = html.split(`<section id="lab${lab}">`)[1]?.split("</section>")[0]
       ?.split('<details class="result-example"')[0];
-    assert.ok(section?.includes('<pre class="prompt"><code>'), `Missing Agent input for Lab ${lab}`);
+    assert.ok(/<pre class="prompt"(?: id="[^"]+")?><code>/.test(section ?? ""), `Missing Agent input for Lab ${lab}`);
   }
   assert.ok(html.includes('bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts'));
   assert.ok(html.includes('bash scripts/monitoring.sh "$RG" "$CLUSTER" audit'));
