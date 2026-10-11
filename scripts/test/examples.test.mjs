@@ -201,13 +201,30 @@ test("response plan setup specifies the matching values without prescribing inve
   assert.ok(setup.includes("Step 2: Incidents preview"));
   assert.ok(setup.includes("Response subagent / Response custom agent"));
   assert.ok(setup.includes("payment-failure-handler"));
+  assert.ok(setup.includes("Custom Agent 담당 지정이 필요"));
+  assert.ok(setup.includes("새 Custom Agent를 매번 만들 필요는 없습니다"));
+  assert.ok(setup.includes("기존 Custom Agent가 있으면 재사용"));
   assert.ok(setup.includes("Built-in Tools / Custom Tools"));
   assert.ok(setup.includes("기본 상속 유지"));
   assert.ok(setup.includes("기본 Agent의 global tools를 상속"));
   assert.ok(setup.includes("특정 도구를 선택하면 상속 목록을 대체"));
   assert.ok(setup.includes("도구 상속과 Azure 접근 권한은 별개"));
-  const instructions = setup.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
-  assert.equal(instructions, "결제 실패 경고의 원인과 영향 범위를 조사해 줘.");
+  const instructions = setup.match(/<pre class="prompt" id="response-handler-instructions"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.ok(instructions?.includes("원인과 서비스에 미치는 영향 범위"));
+});
+
+test("Custom Agent instruction examples meet the 50-character minimum without diagnostic coaching", () => {
+  for (const id of ["response-handler-instructions", "payment-specialist-instructions"]) {
+    const instructions = html.match(new RegExp(`<pre class="prompt" id="${id}"><code>([\\s\\S]*?)</code></pre>`))?.[1];
+    assert.ok(instructions, `Missing Custom Agent instructions: ${id}`);
+    assert.ok([...instructions.replace(/\s/g, "")].length >= 50,
+      `${id} must meet the minimum even without counting spaces`);
+    assert.ok(!/쿼리|로그|UTC|SHA|CLUSTER_ID|APP_INSIGHTS|PBKDF2|SIGNATURE_ITERATIONS|리소스는 변경하지/.test(instructions),
+      "Instructions must define the role and purpose, not prescribe investigation steps");
+  }
+  const incident = html.split('<section id="lab2">')[1]?.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.equal(incident, "카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.",
+    "A Custom Agent field minimum must not lengthen ordinary incident chat inputs");
 });
 
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {

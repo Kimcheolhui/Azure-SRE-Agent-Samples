@@ -388,16 +388,17 @@ bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts</code></pre>
 <h3 id="response-plan-setup">3-3. Incident response plan 입력값</h3>
 <p>Response plan은 <strong>어떤 경고를 어느 조사 담당에게 전달할지</strong> 정하는 설정입니다. 이번에는 <code>payment-failures-kch01x7</code> 경고만 <code>payment-failure-review</code> 계획에 연결합니다. 조회할 로그나 원인 후보를 지침에 나열하지 않습니다.</p>
 <h4>3-3-1. 조사 담당 Custom Agent 준비</h4>
-<p>Plan의 <strong>Response subagent</strong>는 문장을 쓰는 칸이 아니라 이미 만든 Custom Agent를 선택하는 목록입니다. 아래 조사 담당을 먼저 만듭니다.</p>
+<p>Response plan에는 경고를 처리할 <strong>Custom Agent 담당 지정이 필요</strong>하지만, <strong>새 Custom Agent를 매번 만들 필요는 없습니다.</strong> Plan의 <strong>Response subagent</strong>는 이미 만든 Custom Agent를 선택하는 목록입니다. 결제 조사를 맡길 기존 Custom Agent가 있으면 재사용하고, 없다면 아래 <code>payment-failure-handler</code>를 만듭니다. 기존 담당을 재사용할 경우 이후 plan·HTTP Trigger의 담당 선택도 그 이름으로 맞춥니다. 일반 채팅으로 기본 Agent에게 조사를 요청하는 것과 response plan의 자동 경고 라우팅은 별도입니다.</p>
 <ol class="steps"><li><span class="path">SRE Agent → Builder → Agent Canvas → Create → Custom Agent</span>생성 화면에서 아래 값을 입력합니다.
 <div class="table-wrap"><table id="response-handler-values"><thead><tr><th>필드</th><th>입력값</th></tr></thead><tbody>
 <tr><td>Name</td><td><code>payment-failure-handler</code></td></tr>
-<tr><td>Instructions</td><td>아래 한 문장을 입력합니다.</td></tr>
+<tr><td>Instructions</td><td>아래 50자 이상의 지침을 입력합니다.</td></tr>
 <tr><td>Handoff Description</td><td><code>결제 실패 경고 조사 담당.</code></td></tr>
 <tr><td>Built-in Tools / Custom Tools</td><td><strong>기본 상속 유지</strong> — 별도 도구 선택/override하지 않음</td></tr>
 <tr><td>Handoff Agents</td><td>추가 선택하지 않음</td></tr>
 </tbody></table></div>
-<pre class="prompt"><code>결제 실패 경고의 원인과 영향 범위를 조사해 줘.</code></pre>
+<pre class="prompt" id="response-handler-instructions"><code>결제 서비스의 실패 경고를 조사하는 담당 Agent야. 보고된 문제의 원인과 서비스에 미치는 영향 범위를 파악하고 조사 결과를 알려 줘.</code></pre>
+<p>생성 화면의 Instructions는 최소 50자여야 합니다. 위 지침은 역할과 조사 목적만 정의하며 조회 방법이나 원인 후보를 지정하지 않습니다. 이 길이 조건은 Custom Agent 설정용 지침에 적용되는 것이며, 일반 채팅 질문을 길게 작성하라는 뜻이 아닙니다.</p>
 </li><li>Tools를 별도로 선택하지 않으면 기본 Agent의 global tools를 상속하므로 Azure 조회·진단·로그 도구가 없는 빈 Agent를 만드는 것이 아닙니다. 특정 도구를 선택하면 상속 목록을 대체하므로 이번에는 기본 상속을 유지합니다. 도구 상속과 Azure 접근 권한은 별개이므로 Lab 0에서 설정한 <code>rg-payment-kch01x7</code> 연결과 로그 원본 설정은 유지합니다.</li><li>Custom Agent를 저장합니다. 여기에는 장애 주입 스크립트나 예상 원인을 연결하지 않습니다.</li></ol>
 <h4>3-3-2. Response plan 생성</h4>
 <ol class="steps"><li><span class="path">SRE Agent → Incidents → Triggers + response plans</span>처음이면 <strong>Add an incident response plan</strong>, 이미 계획이 있으면 <strong>Create a response plan</strong>을 선택합니다. Builder 경로로 보이는 화면에서는 <strong>Agent Canvas → Create → Trigger → Incident response plan</strong>을 선택해 같은 생성 화면을 엽니다.</li><li><strong>Step 1: Filter criteria</strong>에서 아래 값을 지정합니다. 연결된 incident platform은 <strong>Azure Monitor</strong>여야 합니다.
@@ -555,8 +556,8 @@ tools:
   - RunAzCliReadCommands</code></pre>
 <ol class="steps"><li><span class="path">Agent → Builder → Skills → Create / Add skill</span>이름 <code>payment-investigation</code>, 설명 “Investigate workshop payments by deployed commit and method-specific evidence”를 입력합니다.</li><li><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/operations/payment-investigation/SKILL.md">샘플 SKILL.md</a>를 supporting file로 업로드하고 절차 본문을 확인합니다. 폼/YAML의 name, description, files, tools를 맞춥니다. 지원하지 않는 필드를 추가하지 않습니다.</li><li>새 chat에서 “payment service의 카드 지연을 payment-investigation Skill로 조사해 줘”라고 요청합니다. Skill은 description에 맞춰 자동 로드되며 별도 /skill 명령을 전제하지 않습니다. 선택/로드 기록과 실제 도구 순서를 확인합니다.</li><li>동시 활성 Skill은 최대 <strong>5개</strong>이며 초과 시 가장 오래된 것이 unload됩니다. conversation compaction 시 활성 Skill이 해제되고 필요하면 SKILL.md를 다시 읽어야 합니다. Skill의 도구는 활성 상태에서만 사용할 수 있으므로 항상 영구 노출된다고 가정하지 않습니다.</li></ol>
 <h3>6-2. 전문 Agent와 인계</h3>
-<ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Custom Agent</span>Name <code>payment-specialist</code>, Instructions는 아래 한 문장, Handoff Description은 <code>결제 실패와 지연 조사 담당.</code>을 넣습니다. Built-in/Custom Tools는 별도 선택 없이 기본 상속을 유지합니다. 뒤에서 만들 summary 도구를 이 단계에서 요구하지 않습니다.
-<pre class="prompt"><code>결제 문제의 원인과 영향 범위를 조사해 줘.</code></pre>
+<ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Custom Agent</span>Name <code>payment-specialist</code>, Instructions는 아래 50자 이상의 지침, Handoff Description은 <code>결제 실패와 지연 조사 담당.</code>을 넣습니다. Built-in/Custom Tools는 별도 선택 없이 기본 상속을 유지합니다. 뒤에서 만들 summary 도구를 이 단계에서 요구하지 않습니다.
+<pre class="prompt" id="payment-specialist-instructions"><code>결제 서비스의 문제를 조사하는 담당 Agent야. 보고된 실패나 지연의 원인과 서비스에 미치는 영향 범위를 파악하고 조사 결과를 알려 줘.</code></pre>
 </li><li>Skill 설정에서 <code>payment-investigation</code>을 선택합니다. YAML에서는 <code>allowed_skills</code>에 그 이름을 넣습니다. 모든 Skill을 허용하려면 <code>enable_skills: true</code>를 사용하지만 이번에는 해당 Skill만 연결합니다.</li><li>저장/Apply 후 새 chat의 <code>/agent</code> picker에서 <code>payment-specialist</code>를 선택하고 다음을 입력합니다.
 <pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
 <p>담당 Agent 이름, Skill 로드와 실제 도구 결과를 확인합니다. 명시적 담당 선택을 시험하는 것이므로 자동 인계 성공으로 기록하지 않습니다.</p></li><li>자동 인계도 시험하려면 기본 Agent의 Handoff Agents 목록에 <code>payment-specialist</code>를 추가하고, 새 일반 chat에 같은 증상을 보냅니다. 실제 handoff 기록이 있는지 확인합니다. 인계는 같은 thread 맥락을 공유하므로 새 컨텍스트가 아닙니다.</li></ol>
