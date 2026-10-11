@@ -26,6 +26,29 @@ MS Learn 공식 이미지15개는 원본 URL을 사용하므로 인터넷이 필
 확대/원문 보기와 실패 안내를 제공하며 출처는 [image-sources.json](docs/image-sources.json)에 있습니다.
 공식 화면은 이 실습을 수행한 증거가 아니므로 실제 결과와 구분하세요.
 
+## SRE Agent 생성 값
+
+[워크샵 Lab 0-3](docs/workshop.html#agent-setup)에 Portal에서 입력할 항목을 단계별로 정리했습니다.
+현재 AKS의 `eastus2` 리전과 같은 구독에서 다음 값을 사용합니다.
+
+| 항목 | 값 (`kch01x7` 기준) |
+|---|---|
+| Agent RG | `rg-payment-agent-kch01x7` |
+| Agent 이름 | `agent-payments-kch01x7` |
+| 리전 | East US 2 (`eastus2`) |
+| 모델 공급자 | Azure OpenAI, 서비스의 기본 모델 유지 |
+| Agent Application Insights | `appi-agent-payments-kch01x7` |
+| Agent workspace | `law-agent-payments-kch01x7` |
+| 조사 대상 | `rg-payment-kch01x7` |
+| 초기 permission / mode | Reader / Review |
+| 월 active-flow 한도 초기값 | 5,000 AAU |
+
+Agent 관측용 workspace와 App Insights를 먼저 만들고 생성 화면에서 **기존 App Insights**로 연결합니다.
+앱 관측용 `appi-aks-payment-kch01x7`의 연결 문자열이나 Kubernetes Secret은 바꾸지 않습니다.
+워크샵은 생성 절차를 안내할 뿐 위 Agent 리소스를 자동 생성하지 않습니다.
+평가 전에는 코드·지식·인시던트·예약 연결을 추가하지 않고 실제 읽기 조회를 먼저 확인합니다.
+Pod 접근에는 Agent 실행 UAMI의 AKS credential 역할과 `payments` namespace data-plane Reader가 별도로 필요합니다.
+
 ## 로컬 실행
 
 Node.js **22 이상**, npm이 필요합니다.

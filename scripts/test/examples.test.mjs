@@ -41,6 +41,20 @@ test("AKS instructions use Kubernetes scopes, immutable image and reconnect afte
   assert.ok(!/App Service|az webapp|Website Contributor|appsettings|app settings|read_workshop_version/.test(html));
 });
 
+test("Agent creation includes concrete names, separate observability and neutral initial setup", () => {
+  const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
+  assert.ok(setup, "Agent creation instructions are missing");
+  for (const text of ["rg-payment-agent-kch01x7", "agent-payments-kch01x7",
+    "appi-agent-payments-kch01x7", "law-agent-payments-kch01x7",
+    "East US 2", "Azure OpenAI", "Workspace details", "기존 리소스 선택",
+    "5,000 AAU", "Principal (Object) ID", "Review", "Reader"]) {
+    assert.ok(setup.includes(text), `Missing explicit creation choice: ${text}`);
+  }
+  assert.ok(setup.includes("payment-telemetry Secret에 넣지 않습니다"));
+  assert.ok(setup.includes("scenario.sh·예상 RCA를 연결/업로드하지 않습니다"));
+  assert.ok(!/Azure-SRE-Agent-Samples에서.*코드.*조회/.test(setup));
+});
+
 test("integrated practice output contains record format rather than grading", () => {
   const match = html.match(/<details class="result-example" id="output-capstone"[\s\S]*?<\/details>/);
   assert.ok(match);
