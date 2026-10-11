@@ -20,7 +20,7 @@ AKS에 결제 앱을 컨테이너로 배포하고 장애 재현·조사·복구�
 | [scripts/export-agent-source.mjs](scripts/export-agent-source.mjs) | Agent에 제공할 런타임 코드만 별도 snapshot으로 생성 |
 | [scripts/traffic.mjs](scripts/traffic.mjs) | 카드/계좌 요청 실패율·p95 검증 |
 | [queries](queries) | App Insights/Kubernetes 로그·이벤트 조회 |
-| [tools](tools) | 측정값 통계와 Pod 상태 요약 Python 도구 |
+| [tools](tools) | 측정값 통계와 Pod 상태 요약 Python 도구 (Lab 6-3·6-4 선택 실습) |
 | [operations](operations) | 운영 문서, Skill, 선택적 incident report 양식 |
 
 본문·18개 결과 예시와105개 주제 설명은 오프라인에서 읽을 수 있습니다.

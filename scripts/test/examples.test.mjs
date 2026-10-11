@@ -323,6 +323,21 @@ test("Skill setup edits the default file and tests selection without naming the 
   assert.ok(sample.includes("Output:"));
 });
 
+test("Lab 6 Python tools are optional with a skippable dependent PostToolUse exercise", () => {
+  const lab = html.split('<section id="lab6">')[1]?.split("</section>")[0];
+  assert.ok(lab);
+  assert.ok(lab.includes("6-3. Python 도구 만들기와 입력 계약 검증 — 선택 실습"));
+  assert.ok(lab.includes("6-4. Pod 상태를 해석하는 Python 도구 — 선택 실습"));
+  assert.ok(lab.includes("생략하고 Lab 7로 진행해도 됩니다"));
+  assert.ok(lab.includes('data-check="lab6">Skill 선택과 전문 Agent 인계를 확인했다.'));
+  assert.ok(lab.includes('data-result-json="summary-tool"'),
+    "Optional examples and tool instructions should remain available");
+  const hook = html.split("<h3>9-4.")[1]?.split("<p class=\"sources\">")[0];
+  assert.ok(hook?.includes("도구를 만든 경우에만 진행하는 선택 실습"));
+  assert.ok(hook.includes("PostToolUse 실습도 건너뛰고"));
+  assert.ok(hook.includes("Stop Hook만 확인·Disable"));
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
