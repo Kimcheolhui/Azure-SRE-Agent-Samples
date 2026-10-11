@@ -116,6 +116,11 @@ Owner는 `Kimcheolhui`, Repository는 `Azure-SRE-Agent-Samples`, 기본 브랜�
 원인을 알려 주지 않는 질문 예: “카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.”
 scenario 이름, 변경한 변수/값, 예상 RCA나 복구 명령은 질문에 넣지 않습니다.
 
+Lab 7-2·7-3의 BYO GitHub App/Key Vault, Lab 8의 Agent 복구 실행,
+Lab 9-4의 PostToolUse는 `(Optional)`입니다.
+Lab 9-1은 본인에게 테스트 메일을 보낸 뒤, 실제 경고의 조사 스레드에서
+원인 분석과 권장 조치 방법을 메일로 전달하는 실습입니다. 메일 전송과 서비스 복구는 별개입니다.
+
 ## Lab 3 이후 반복 가능한 Azure 설정
 
 저장소 루트에서 기존 `RG`, `CLUSTER`, `SUFFIX`, `LOCATION` 변수를 사용합니다.

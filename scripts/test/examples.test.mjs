@@ -354,6 +354,44 @@ test("Lab 7 connects the entire Samples repository without requiring a runtime-o
   assert.ok(!readme.includes("이 저장소 전체 Code Access를 허용하지 마세요"));
 });
 
+test("advanced GitHub authentication, Lab 8 and PostToolUse carry the requested Optional labels", () => {
+  for (const heading of [
+    "<h3>7-2. BYO GitHub App 만들기 (Optional)</h3>",
+    "<h3>7-3. Key Vault secret과 connector 인증 (Optional)</h3>",
+    "<h2>Lab 8. 실행 신원·승인 확인과 복구 (Optional)</h2>",
+    "<h3>9-4. PostToolUse, 우선순위와 실패 시험 (Optional)</h3>"
+  ]) assert.ok(html.includes(heading), `Missing exact optional heading: ${heading}`);
+  assert.ok(html.includes('<a href="#lab8">Lab 8 · 승인과 복구 (Optional)</a>'));
+});
+
+test("email lab separates a connection test from an actual incident analysis email", () => {
+  const mail = html.match(/<h3 id="incident-email-setup">([\s\S]*?)(?=<h3\b)/)?.[1];
+  assert.ok(mail, "Incident email workflow requires its own linkable section");
+  for (const text of ["payment-mail", "Office 365 Outlook", "연결 테스트", "원인 분석",
+    "권장 조치", "본인의 이메일", "같은 조사 스레드", "받은 편지함",
+    'bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts',
+    'node scripts/traffic.mjs "$APP_URL" 40 payment-exception',
+    "payment-failure-review", "Resolved", "--set properties.enabled=false"]) {
+    assert.ok(mail.includes(text), `Missing usable incident email step: ${text}`);
+  }
+  assert.ok(mail.includes("Lab 8을 수행하지 않아도"));
+  assert.ok(mail.includes("Subject와 Body는 동적"));
+  assert.ok(mail.includes("수신자를 고정"));
+  assert.ok(mail.includes("Ask"));
+  assert.ok(mail.includes("Permission을 Allow에서 Ask로 변경"));
+  assert.ok(mail.includes("Parameter policy"));
+  assert.ok(mail.includes("Next → Review &amp; Create → Create"));
+  assert.ok(mail.includes("일반 chat에서 테스트 메일이 발송된다고 response plan의 담당도"));
+  assert.ok(mail.includes("Review만으로"));
+  assert.ok(mail.includes("조치 방법 안내이지 실제 조치 실행이 아닙니다"));
+  assert.ok(!mail.includes("Body만 동적"));
+  const prompts = [...mail.matchAll(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/g)].map(([, prompt]) => prompt);
+  assert.ok(prompts.some(prompt => prompt.includes("연결 테스트") && prompt.includes("메일")));
+  assert.ok(prompts.some(prompt => prompt.includes("원인 분석") && prompt.includes("조치 방법") && prompt.includes("메일")));
+  assert.ok(prompts.every(prompt => !/CARD_MERCHANT_ACCOUNT|SIGNATURE_ITERATIONS|payment-exception/.test(prompt)),
+    "Email requests must not leak the injected cause or scenario-control name");
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
