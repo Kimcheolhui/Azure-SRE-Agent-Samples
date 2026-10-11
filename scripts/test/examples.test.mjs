@@ -33,11 +33,11 @@ test("Hook rejection has a nonempty reason and private output is explicitly illu
   assert.ok(html.includes("가상 PE 주소"));
 });
 
-test("capstone output example contains submission format, not worked-case solutions", () => {
+test("integrated practice output contains record format rather than grading", () => {
   const match = html.match(/<details class="result-example" id="output-capstone"[\s\S]*?<\/details>/);
   assert.ok(match);
-  assert.ok(match[0].includes("제출 묶음"));
-  assert.ok(match[0].includes("풀이/정답은 여기 넣지 않습니다"));
+  assert.ok(match[0].includes("실습 기록"));
+  assert.ok(!match[0].includes("채점"));
   assert.ok(!match[0].includes("가설 A provider 대기"));
 });
 
@@ -51,4 +51,15 @@ test("official images use documented first-party URLs and remain inside matching
     const panel = html.match(new RegExp(`<details class="result-example" id="output-${image.task}"[\\s\\S]*?</details>`));
     assert.ok(panel?.[0].includes(`data-image-id="${image.id}"`), `Image outside its result panel: ${image.id}`);
   }
+});
+
+test("workshop omits learner grading, delayed study requirements and the removed output index", () => {
+  assert.ok(!/recall-day\d|const delayed/.test(html));
+  assert.ok(!/다음 날|일주일|24시간|지연 재시험|7일 뒤/.test(html));
+  assert.ok(!/data-score|data-rubric|data-safety|mastery-score|capstone-score|reset-recall|자기 채점|자기평가/.test(html));
+  assert.ok(!/id="outputs"|href="#outputs"|output-index/.test(html));
+  assert.ok(!/id="coverage"|href="#coverage"|data-covers|원본 [1-8]\.\d/.test(html));
+  assert.ok(!/사다리|큰 그림|상황극|빈 표|사건 가:|사건 나:|사건 다:|노트에|노트를|채점표/.test(html));
+  assert.ok(html.includes('id="output-lab6"'));
+  assert.ok(html.includes("평가·추정 지표의 의미"));
 });
