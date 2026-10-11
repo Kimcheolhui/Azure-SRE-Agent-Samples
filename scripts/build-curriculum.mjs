@@ -73,7 +73,7 @@ ${questions}
 ${section.introduction.map(text => `<p>${escape(text)}</p>`).join("\n")}
 ${explanations}
 ${answers}
-<p class="sources">${sources}</p>
+<p class="sources">참고 문서: ${sources}</p>
 </details>
 </article>`);
     }

@@ -90,6 +90,17 @@ test("initial logs setup distinguishes inherited access, workload sources and Ag
   assert.ok(!queryPrompt.includes("정상 서비스로 표현하지"));
 });
 
+test("reference blocks start with a label and the initial resource prompt uses its RG instead of cluster ID", () => {
+  const references = [...html.matchAll(/<p class="sources">([\s\S]*?)<\/p>/g)];
+  assert.ok(references.length >= 105);
+  assert.ok(references.every(([, contents]) => contents.startsWith("참고 문서: ")));
+  const prompt = html.match(/<pre class="prompt"><code>대상 리소스 그룹: rg-payment-kch01x7\.([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.ok(prompt, "Initial resource query requires the explicit example RG");
+  assert.ok(!prompt.includes("CLUSTER_ID"));
+  assert.ok(!prompt.includes("&lt;RG&gt;"));
+  assert.ok(prompt.includes("이 그룹의 AKS"));
+});
+
 test("integrated practice output contains record format rather than grading", () => {
   const match = html.match(/<details class="result-example" id="output-capstone"[\s\S]*?<\/details>/);
   assert.ok(match);
