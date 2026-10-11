@@ -33,6 +33,17 @@ test("request duration percentiles use numeric milliseconds without timespan div
   assert.ok(html.includes("<code>duration</code>은 이미 밀리초 단위의 <code>real</code> 값입니다"));
 });
 
+test("Lab 1 Agent prompt leaves source selection and log distinctions to the Agent", () => {
+  const lab = html.split('<section id="lab1">')[1]?.split("</section>")[0];
+  const prompt = lab?.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.ok(prompt);
+  assert.ok(!/Application Insights|APP_INSIGHTS_RESOURCE_ID|Resource Health|Activity Log|audit/.test(prompt));
+  for (const text of ["카드/계좌별 요청 수, 실패율, p95", "provider 종속성 시간",
+    "쿼리와 UTC 구간, 실제 조회한 원본", "Pod Ready/restarts, image digest, 이벤트"]) {
+    assert.ok(prompt.includes(text), `Baseline prompt must preserve the requested evidence: ${text}`);
+  }
+});
+
 test("Lab 1 embeds the Kubernetes queries and executable read-only inspection commands", () => {
   const logs = html.match(/<li id="lab1-kubernetes-logs">([\s\S]*?)<\/li>/)?.[1];
   const cli = html.match(/<li id="lab1-kubernetes-cli">([\s\S]*?)<\/li>/)?.[1];

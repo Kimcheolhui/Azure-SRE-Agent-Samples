@@ -275,11 +275,9 @@ kubectl -n payments get events --sort-by=.metadata.creationTimestamp</code></pre
 </li></ol>
 <details><summary>로그가 없거나 Agent가 데이터를 못 읽을 때</summary><ol><li>/version의 podName/namespace/commit이 실제 실행 Pod와 맞는지 확인합니다.</li><li><code>kubectl logs</code>에서 SDK 전송 오류를 확인합니다. payment-telemetry Secret 이름과 참조는 확인하되 값은 출력하지 않습니다.</li><li>앱 로그(App Insights), container stdout(ContainerLogV2), Pod 상태/이벤트, Kubernetes API audit는 서로 다른 원본입니다.</li><li>수집 구간/namespace/DCR과 Agent의 Azure 및 Kubernetes data-plane RBAC를 각각 확인합니다. 빈 데이터를 정상이라고 하지 않습니다.</li></ol></details>
 <pre class="prompt"><code>AKS &lt;CLUSTER_ID&gt;, namespace payments, Deployment/payment-api의 최근30분을 조사해.
-Application Insights &lt;APP_INSIGHTS_RESOURCE_ID&gt;를 명시적으로 사용하고,
 카드/계좌별 요청 수, 실패율, p95, provider 종속성 시간을 제시해 줘.
 쿼리와 UTC 구간, 실제 조회한 원본을 함께 보여 줘.
-Pod별 요청과 Pod Ready/restarts, image digest, 이벤트도 확인해.
-Resource Health/Activity Log와 Kubernetes 이벤트·audit를 구분해 줘.</code></pre>
+Pod별 요청과 Pod Ready/restarts, image digest, 이벤트도 확인해.</code></pre>
 <p class="sources">참고 문서: <a href="https://learn.microsoft.com/en-us/azure/sre-agent/diagnose-azure-observability">Azure 관측 원본</a><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview">Application Insights</a></p>
 <details class="result-example" id="output-lab1" data-output-for="lab1"><summary>예상 결과물 · 정상 요청 요약과 KQL 표</summary>
 <p class="sample-label">아래 JSONL은 2026-10-11 샘플 앱의 로컬 20쌍 실측 예시입니다. Azure/자신의 회선 p95와 같은 숫자가 나오리라는 보장은 없습니다.</p>
