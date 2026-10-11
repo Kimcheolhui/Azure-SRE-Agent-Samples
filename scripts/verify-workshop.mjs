@@ -3,7 +3,6 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Script } from "node:vm";
 import assert from "node:assert/strict";
-import { chapterCounts, renderCurriculum, insertCurriculum } from "./build-curriculum.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const html = readFileSync(resolve(root, "docs/workshop.html"), "utf8");
@@ -25,19 +24,9 @@ for (const match of markup.matchAll(/<(\/?)([a-z][a-z0-9-]*)\b[^>]*>/gi)) {
   else stack.push(tag);
 }
 assert.equal(stack.length, 0, "Unclosed HTML tags");
-const curriculum = JSON.parse(readFileSync(resolve(root, "docs/curriculum.json"), "utf8"));
-const references = [...markup.matchAll(/data-section="([^"]+)"/g)].map(match => match[1]);
-const topics = new Set(references);
-for (const [index, count] of chapterCounts.entries()) {
-  const chapter = index + 1;
-  for (let section = 1; section <= count; section++) {
-    assert.ok(topics.has(`${chapter}.${section}`), `Missing topic ${chapter}.${section}`);
-  }
-}
-assert.equal(topics.size, 105, "Unexpected topic count");
-assert.equal(insertCurriculum(html, renderCurriculum(curriculum)), html, "Reference content is stale");
-assert.equal(references.length, 105);
-assert.equal(new Set(references).size, 105);
+assert.ok(!ids.includes("recall"), "Removed reference section must not be present");
+assert.ok(!/CURRICULUM_START|CURRICULUM_END|recall-card|data-section=/.test(markup),
+  "Removed reference cards must not be present");
 assert.ok(!/data-score=|data-rubric=|data-safety=/.test(markup), "Learner grading controls must not be present");
 assert.ok(!ids.includes("outputs"), "Removed result index must not be present");
 assert.ok(!/data-covers=|data-exercise=/.test(markup) && !ids.includes("coverage"),
@@ -79,7 +68,7 @@ for (const file of ["samples/payment-api/package-lock.json", "infra/main.bicep",
   "operations/service-context.md", "operations/payment-investigation/SKILL.md",
   "tools/summarize_payments.py", "tools/inspect_pods.py", "k8s/workload.yaml",
   "samples/payment-api/Dockerfile", "scripts/connect.sh", "operations/recovery-check.txt",
-  "docs/curriculum.json", "docs/image-sources.json"]) {
+  "docs/image-sources.json"]) {
   assert.ok(existsSync(resolve(root, file)), `Missing workshop artifact: ${file}`);
 }
-console.log(`Workshop verified: ${topics.size} reference topics, ${outputs.length} result examples, ${figures.length} credited figures, ${checks.length} progress checks and valid HTML/JavaScript.`);
+console.log(`Workshop verified: ${outputs.length} result examples, ${figures.length} credited figures, ${checks.length} progress checks and valid HTML/JavaScript.`);

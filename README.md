@@ -23,7 +23,8 @@ AKS에 결제 앱을 컨테이너로 배포하고 장애 재현·조사·복구�
 | [tools](tools) | 측정값 통계와 Pod 상태 요약 Python 도구 (Lab 6-3·6-4 선택 실습) |
 | [operations](operations) | 운영 문서, Skill, 선택적 incident report 양식 |
 
-본문·17개 결과 예시와105개 주제 설명은 오프라인에서 읽을 수 있습니다.
+실습 본문과17개 결과 예시는 오프라인에서 읽을 수 있습니다.
+중복되는 주제별 설명·참고 질문은 워크샵에서 제외하고 별도 학습 가이드·발표 슬라이드에서 확인합니다.
 MS Learn 공식 이미지15개는 원본 URL을 사용하므로 인터넷이 필요합니다.
 확대/원문 보기와 실패 안내를 제공하며 출처는 [image-sources.json](docs/image-sources.json)에 있습니다.
 공식 화면은 이 실습을 수행한 증거가 아니므로 실제 결과와 구분하세요.
@@ -269,7 +270,6 @@ cd samples/payment-api && npm test
 
 단위/HTTP/SDK 테스트, 격리된 mock Azure·kubectl script tests와 manifest 정적 검사입니다.
 실제 Azure 배포·AKS tool/RBAC/DNS를 실행한 검증은 학습자 구독에서 따로 수행해야 합니다.
-참고 설명 갱신은 `node scripts/build-curriculum.mjs`로 단일 HTML에 반영합니다.
 
 ## 정리
 

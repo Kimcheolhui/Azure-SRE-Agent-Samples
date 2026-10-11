@@ -228,9 +228,6 @@ test("Lab 3 focuses on alert routing and keeps recovery and shutdown after the i
   assert.ok(cleanup.indexOf('scenario.sh "$RG" "$CLUSTER" healthy') < cleanup.indexOf("--set properties.enabled=false"),
     "The alert must be disabled only after service recovery");
   assert.ok(lab.includes('cleanup: 실습 경고 Disabled / payment-failure-review Off'));
-  assert.ok(html.includes('https://learn.microsoft.com/en-us/azure/sre-agent/http-triggers'));
-  assert.ok(html.includes('https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-dynamic-thresholds'),
-    "Concept references should remain outside the removed Lab 3 exercises");
 });
 
 test("Custom Agent instruction examples meet the 50-character minimum without diagnostic coaching", () => {
@@ -422,7 +419,7 @@ test("initial logs setup distinguishes inherited access, workload sources and Ag
 
 test("reference blocks start with a label and the initial resource prompt uses its RG instead of cluster ID", () => {
   const references = [...html.matchAll(/<p class="sources">([\s\S]*?)<\/p>/g)];
-  assert.ok(references.length >= 105);
+  assert.ok(references.length > 0);
   assert.ok(references.every(([, contents]) => contents.startsWith("참고 문서: ")));
   const prompt = html.match(/<pre class="prompt"><code>대상 리소스 그룹: rg-payment-kch01x7\.([\s\S]*?)<\/code><\/pre>/)?.[1];
   assert.ok(prompt, "Initial resource query requires the explicit example RG");
@@ -463,6 +460,14 @@ test("official images use documented first-party URLs and remain inside matching
   }
 });
 
+test("workshop omits duplicate reference cards while keeping labs, examples and progress", () => {
+  assert.ok(!/id="recall"|href="#recall"|recall-card|answer-key|CURRICULUM_START|CURRICULUM_END|105개/.test(html));
+  assert.ok(html.includes('<section id="lab0">') && html.includes('<section id="lab12">'));
+  assert.ok(html.includes('<section id="capstone">') && html.includes('<section id="cleanup">'));
+  assert.equal([...html.matchAll(/data-output-for="/g)].length, 17);
+  assert.equal([...html.matchAll(/data-check="/g)].length, 17);
+});
+
 test("workshop omits learner grading, delayed study requirements and the removed output index", () => {
   assert.ok(!/recall-day\d|const delayed/.test(html));
   assert.ok(!/다음 날|일주일|24시간|지연 재시험|7일 뒤/.test(html));
@@ -471,5 +476,4 @@ test("workshop omits learner grading, delayed study requirements and the removed
   assert.ok(!/id="coverage"|href="#coverage"|data-covers|원본 [1-8]\.\d/.test(html));
   assert.ok(!/사다리|큰 그림|상황극|빈 표|사건 가:|사건 나:|사건 다:|노트에|노트를|채점표/.test(html));
   assert.ok(html.includes('id="output-lab6"'));
-  assert.ok(html.includes("평가·추정 지표의 의미"));
 });
