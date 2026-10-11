@@ -180,6 +180,34 @@ test("Portal resource names use the filled suffix while terminal commands keep v
   assert.ok(html.includes('az monitor data-collection rule show -g "$RG" -n "dcr-$CLUSTER"'));
 });
 
+test("response plan setup specifies the matching values without prescribing investigation steps", () => {
+  const setup = html.match(/<h3 id="response-plan-setup">([\s\S]*?)<h3>/)?.[1];
+  assert.ok(setup, "Response plan setup requires a linkable section");
+  assert.ok(setup.includes('<table id="response-plan-values">'));
+  for (const text of ["payment-failure-review", "payment-failures-kch01x7",
+    "Azure Monitor", "Review"]) {
+    assert.ok(setup.includes(text), `Missing explicit response plan value: ${text}`);
+  }
+  assert.ok(!/SOURCE_COMMIT|경쟁 가설|&lt;CLUSTER_ID&gt;|20쌍 결제|p95 ≤1000ms/.test(setup),
+    "Response plan setup must not coach the investigation or require resource IDs in instructions");
+  assert.ok(!html.includes("response plan의 impacted service/title 조건과 handler 지침에"));
+  const connection = html.split("<h3>3-2.")[1]?.split('<h3 id="response-plan-setup">')[0];
+  assert.ok(connection?.includes("law-aks-payment-kch01x7"));
+  assert.ok(connection.includes("rg-payment-kch01x7"));
+  assert.ok(setup.includes("Sev2 / Warning"));
+  assert.ok(setup.includes("<td>Title does not contain</td><td><strong>빈칸</strong>"));
+  assert.ok(setup.includes("Step 2: Incidents preview"));
+  assert.ok(setup.includes("Response subagent / Response custom agent"));
+  assert.ok(setup.includes("payment-failure-handler"));
+  assert.ok(setup.includes("Built-in Tools / Custom Tools"));
+  assert.ok(setup.includes("기본 상속 유지"));
+  assert.ok(setup.includes("기본 Agent의 global tools를 상속"));
+  assert.ok(setup.includes("특정 도구를 선택하면 상속 목록을 대체"));
+  assert.ok(setup.includes("도구 상속과 Azure 접근 권한은 별개"));
+  const instructions = setup.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.equal(instructions, "결제 실패 경고의 원인과 영향 범위를 조사해 줘.");
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
