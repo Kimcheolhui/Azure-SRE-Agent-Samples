@@ -33,6 +33,40 @@ test("request duration percentiles use numeric milliseconds without timespan div
   assert.ok(html.includes("<code>duration</code>은 이미 밀리초 단위의 <code>real</code> 값입니다"));
 });
 
+test("Lab 1 embeds the Kubernetes queries and executable read-only inspection commands", () => {
+  const logs = html.match(/<li id="lab1-kubernetes-logs">([\s\S]*?)<\/li>/)?.[1];
+  const cli = html.match(/<li id="lab1-kubernetes-cli">([\s\S]*?)<\/li>/)?.[1];
+  assert.ok(logs);
+  assert.ok(cli);
+  const kubernetes = readFileSync(new URL("../../queries/kubernetes.kql", import.meta.url), "utf8");
+  const queries = kubernetes.replace(/^\/\/.*\n/gm, "").trim().split(/\r?\n\r?\n/);
+  assert.equal(queries.length, 3);
+  for (const query of queries) {
+    assert.ok(logs.includes(`<pre><code>${query.replaceAll(">", "&gt;")}</code></pre>`),
+      "Each Kubernetes query must be identical in the workshop and query file");
+  }
+  for (const command of ["az monitor data-collection rule association list --resource",
+    'az monitor data-collection rule show -g "$RG" -n "dcr-$CLUSTER"']) {
+    assert.ok(logs.includes(command), `Missing DCR inspection command: ${command}`);
+  }
+  for (const text of ["namespaceFilteringMode=Off", "enableContainerLogV2=true",
+    "workspaceResourceId", "새 이벤트가 없거나 수집 설정에 따라 0건"]) {
+    assert.ok(logs.includes(text), `Missing collection/output explanation: ${text}`);
+  }
+  for (const command of ['export KUBECONFIG="$PWD/artifacts/kubeconfig-$CLUSTER"',
+    "kubectl -n payments get deployments -l application=payments",
+    "kubectl -n payments get pods -l application=payments -o wide",
+    'kubectl -n payments describe pod "$POD"',
+    "kubectl -n payments get events --sort-by=.metadata.creationTimestamp"]) {
+    assert.ok(cli.includes(command), `Missing executable inspection command: ${command}`);
+  }
+  assert.ok(cli.includes("IMAGE_ID:.status.containerStatuses[*].imageID"));
+  assert.ok(cli.includes("POD=$(kubectl"));
+  assert.ok(cli.includes("2/2") && cli.includes("1/1"));
+  assert.ok(!/\b(?:kubectl (?:apply|patch|delete|scale)|az monitor data-collection rule (?:create|update))\b/.test(logs + cli),
+    "Baseline inspection must not change resources");
+});
+
 test("Hook rejection has a nonempty reason and private AKS output is explicitly illustrative", () => {
   const hook = JSON.parse(resultCode("hook"));
   assert.equal(hook.ok, false);

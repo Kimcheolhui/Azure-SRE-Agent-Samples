@@ -3,12 +3,14 @@ KubePodInventory
 | where TimeGenerated > ago(30m) and Namespace == "payments"
 | summarize arg_max(TimeGenerated, *) by Name, ContainerName
 | project TimeGenerated, Name, PodStatus, ContainerName, ContainerStatus, ContainerRestartCount, Computer
+| order by Name asc
 
 ContainerLogV2
 | where TimeGenerated > ago(30m) and PodNamespace == "payments"
-| where ContainerName == "payment-api"
-| project TimeGenerated, PodName, LogSource, LogMessage
+| where ContainerName in ("payment-api", "payment-provider")
+| project TimeGenerated, PodName, ContainerName, LogSource, LogMessage
 | order by TimeGenerated desc
+| take 100
 
 KubeEvents
 | where TimeGenerated > ago(30m) and Namespace == "payments"

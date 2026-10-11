@@ -221,7 +221,58 @@ exceptions
 | where TimeGenerated &gt; ago(30m) and Name == "GET /pay"
 | extend method=tostring(Properties.paymentMethod)
 | summarize count=count(), failures=countif(Success == false),
-    p95Ms=percentile(DurationMs, 95) by method</code></pre></li><li>Container Insights에서 Kubernetes 로그를 확인합니다. workspace의 <code>ContainerLogV2</code>, <code>KubePodInventory</code>, <code>KubeEvents</code>를 각각 조회합니다. <code>queries/kubernetes.kql</code>의 별도 블록을 실행합니다. DCR에서 payments namespace 수집과 ContainerLogV2가 켜졌는지 확인합니다. 지원/설정에 따라 수집 지연이나 table 부재가 생길 수 있습니다.</li><li><code>kubectl -n payments get pods -o wide</code>, <code>describe pod &lt;POD&gt;</code>, <code>get events</code>로 Pod Ready, restartCount, 이미지 digest를 확인합니다. Azure Activity Log는 AKS 리소스 생성·설정 변경용이며 Deployment env patch 등 Kubernetes API 작업은 별도 audit 로그가 필요합니다.</li></ol>
+    p95Ms=percentile(DurationMs, 95) by method</code></pre></li>
+<li id="lab1-kubernetes-logs"><span class="path">Portal → Log Analytics workspaces → <code>law-$CLUSTER</code> → Logs</span>직전 단계와 같은 workload workspace에서 Kubernetes 데이터를 확인합니다. 예시 이름은 <code>law-aks-payment-kch01x7</code>입니다. 쿼리 허브/예시를 닫고 Time range를 Last 30 minutes로 설정합니다. 아래 세 쿼리는 <strong>각각 따로 복사해 실행</strong>합니다. 동일한 쿼리는 <a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/queries/kubernetes.kql">queries/kubernetes.kql</a>에도 있습니다.
+<p><strong>Pod 상태와 재시작 횟수:</strong> 각 Pod·컨테이너의 최근 수집값을 봅니다.</p>
+<pre><code>KubePodInventory
+| where TimeGenerated &gt; ago(30m) and Namespace == "payments"
+| summarize arg_max(TimeGenerated, *) by Name, ContainerName
+| project TimeGenerated, Name, PodStatus, ContainerName, ContainerStatus, ContainerRestartCount, Computer
+| order by Name asc</code></pre>
+<p>정상 배포라면 API 2개와 provider 2개 Pod의 행을 확인할 수 있습니다. <code>PodStatus</code>는 Running, <code>ContainerStatus</code>는 running인지 확인하고 <code>ContainerRestartCount</code>를 봅니다. 이는 수집 시점의 상태이므로 Ready 여부와 현재 상태는 다음 단계의 <code>kubectl</code>로 확인합니다.</p>
+<p><strong>API와 provider의 stdout/stderr:</strong> 최근 로그 100건을 봅니다.</p>
+<pre><code>ContainerLogV2
+| where TimeGenerated &gt; ago(30m) and PodNamespace == "payments"
+| where ContainerName in ("payment-api", "payment-provider")
+| project TimeGenerated, PodName, ContainerName, LogSource, LogMessage
+| order by TimeGenerated desc
+| take 100</code></pre>
+<p><code>ContainerName</code>으로 API/provider를 구분하고 <code>LogMessage</code>를 펼칩니다. API의 <code>request_completed</code> 로그에서 status·durationMs·paymentMethod를 확인합니다. port-forward는 API Pod 하나에 연결되므로 모든 API Pod에 동일한 요청 로그가 있어야 하는 것은 아닙니다.</p>
+<p><strong>Kubernetes 이벤트:</strong> 스케줄링·컨테이너 시작·이미지 pull 등의 이벤트를 봅니다.</p>
+<pre><code>KubeEvents
+| where TimeGenerated &gt; ago(30m) and Namespace == "payments"
+| project TimeGenerated, Name, Reason, Message, KubeEventType
+| order by TimeGenerated desc</code></pre>
+<p><code>Reason</code>·<code>Message</code>·<code>KubeEventType</code>을 확인합니다. 정상 구간에는 새 이벤트가 없거나 수집 설정에 따라 0건일 수 있습니다. 이벤트 0건만으로 서비스 정상 여부를 판단하지 않습니다. 테이블을 찾을 수 없다는 오류는 조회 결과 0건과 다르므로 아래 수집 설정을 확인합니다.</p>
+<p><strong>DCR 연결과 수집 설정 확인:</strong> <span class="path">Portal → Monitor → Data Collection Rules → <code>dcr-$CLUSTER</code></span>에서 해당 규칙을 엽니다. 예시 이름은 <code>dcr-aks-payment-kch01x7</code>입니다. 로컬 터미널에서는 아래 읽기 전용 명령어를 실행합니다. 다른 접미사를 사용했다면 <code>RG</code>·<code>CLUSTER</code> 값을 자신의 이름으로 바꿉니다.</p>
+<pre><code>export RG="rg-payment-kch01x7"
+export CLUSTER="aks-payment-kch01x7"
+export CLUSTER_ID=$(az aks show -g "$RG" -n "$CLUSTER" --query id -o tsv)
+az monitor data-collection rule association list --resource "$CLUSTER_ID" \
+  --query "[].{association:name,rule:dataCollectionRuleId}" -o table
+az monitor data-collection rule show -g "$RG" -n "dcr-$CLUSTER" \
+  --query "{extensions:dataSources.extensions,destinations:destinations.logAnalytics,flows:dataFlows}" \
+  -o json</code></pre>
+<p>association 목록에서 <code>container-insights</code>가 <code>dcr-$CLUSTER</code>에 연결돼 있는지 확인합니다. 규칙 JSON에서는 <code>extensionName=ContainerInsights</code>, <code>enableContainerLogV2=true</code>, <code>namespaceFilteringMode=Off</code>, <code>interval=1m</code>을 확인합니다. Off는 payments를 포함한 전체 namespace 수집입니다. <code>destinations</code>의 <code>workspaceResourceId</code>가 workload <code>law-$CLUSTER</code>를 가리키고 <code>flows</code>의 <code>Microsoft-ContainerInsights-Group-Default</code>가 해당 destination에 연결돼 있어야 합니다. 값이 다르면 여기서 임의로 수정하지 말고 실제 배포 설정을 확인합니다. 수집에는 지연이 있으므로 방금 실행한 요청은 수 분 뒤 다시 조회합니다.</p>
+</li>
+<li id="lab1-kubernetes-cli"><span class="path">로컬 터미널 → Azure-SRE-Agent-Samples 저장소 폴더</span>port-forward를 실행 중인 터미널은 그대로 두고 다른 터미널에서 실행합니다. 다른 접미사를 사용했다면 아래 <code>RG</code>·<code>CLUSTER</code> 값을 자신의 이름으로 바꿉니다. 기존 연결 파일을 지정하며 기본 kubeconfig를 덮어쓰지 않습니다. 파일이 없다면 Lab 0의 <code>bash scripts/connect.sh "$RG" "$CLUSTER"</code>를 먼저 실행합니다.
+<pre><code>export RG="rg-payment-kch01x7"
+export CLUSTER="aks-payment-kch01x7"
+export KUBECONFIG="$PWD/artifacts/kubeconfig-$CLUSTER"
+kubectl -n payments get deployments -l application=payments
+kubectl -n payments get pods -l application=payments -o wide</code></pre>
+<p>정상 배포에서는 두 Deployment의 READY가 각각 <code>2/2</code>, API 2개와 provider 2개 Pod의 READY가 각각 <code>1/1</code>, STATUS가 Running인지 확인합니다. RESTARTS가 증가하는지도 확인합니다. Pod Ready는 프로세스 응답을 뜻하며 결제 요청 성공을 대신하지 않습니다.</p>
+<p><strong>컨테이너별 Ready·restartCount·실제 이미지 digest:</strong></p>
+<pre><code>kubectl -n payments get pods -l application=payments \
+  -o custom-columns='POD:.metadata.name,CONTAINER:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready,RESTARTS:.status.containerStatuses[*].restartCount,IMAGE:.spec.containers[*].image,IMAGE_ID:.status.containerStatuses[*].imageID'</code></pre>
+<p><code>READY=true</code>와 restart 횟수를 확인합니다. <code>IMAGE</code>는 지정한 이미지, <code>IMAGE_ID</code>는 실제 실행 컨테이너의 이미지 식별자입니다. 정상 실행 중인 컨테이너의 <code>IMAGE_ID</code>에 <code>sha256:</code> digest가 있는지, 지정한 배포 digest와 일치하는지 확인합니다. 값이 없으면 컨테이너가 아직 시작되지 않았을 수 있으므로 아래 상세 상태와 이벤트를 봅니다.</p>
+<p><strong>API Pod 하나의 상세 상태와 namespace 이벤트:</strong> 첫 번째 API Pod 이름을 자동으로 가져옵니다. 다른 Pod를 확인하려면 위 목록의 실제 이름으로 <code>POD</code> 값을 바꿉니다.</p>
+<pre><code>POD=$(kubectl -n payments get pods -l app=payment-api -o jsonpath='{.items[0].metadata.name}')
+kubectl -n payments describe pod "$POD"
+kubectl -n payments get events --sort-by=.metadata.creationTimestamp</code></pre>
+<p><code>describe</code>의 Containers에서 State·Ready·Restart Count·Image ID, Conditions에서 Ready, 마지막 Events에서 Reason·Message를 확인합니다. <code>get events</code>는 현재 Kubernetes API에 남아 있는 이벤트이므로 Log Analytics의 보관 로그와 조회 범위가 다르고, 오래된 이벤트는 만료돼 없을 수 있습니다.</p>
+<p>Azure Activity Log는 AKS 리소스 생성·설정 변경용이며 Deployment env patch 등 Kubernetes API 작업은 별도 audit 로그가 필요합니다. 위 <code>KubeEvents</code>와 <code>kubectl get events</code>도 Kubernetes API 감사 로그를 대신하지 않습니다.</p>
+</li></ol>
 <details><summary>로그가 없거나 Agent가 데이터를 못 읽을 때</summary><ol><li>/version의 podName/namespace/commit이 실제 실행 Pod와 맞는지 확인합니다.</li><li><code>kubectl logs</code>에서 SDK 전송 오류를 확인합니다. payment-telemetry Secret 이름과 참조는 확인하되 값은 출력하지 않습니다.</li><li>앱 로그(App Insights), container stdout(ContainerLogV2), Pod 상태/이벤트, Kubernetes API audit는 서로 다른 원본입니다.</li><li>수집 구간/namespace/DCR과 Agent의 Azure 및 Kubernetes data-plane RBAC를 각각 확인합니다. 빈 데이터를 정상이라고 하지 않습니다.</li></ol></details>
 <pre class="prompt"><code>AKS &lt;CLUSTER_ID&gt;, namespace payments, Deployment/payment-api의 최근30분을 조사해.
 Application Insights &lt;APP_INSIGHTS_RESOURCE_ID&gt;를 명시적으로 사용하고,
