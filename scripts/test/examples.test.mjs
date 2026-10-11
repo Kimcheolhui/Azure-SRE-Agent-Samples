@@ -54,6 +54,12 @@ test("Agent creation includes concrete names, separate observability and neutral
   assert.ok(setup.includes("scenario.sh·예상 RCA를 연결/업로드하지 않습니다"));
   assert.ok(setup.includes("현재 기본 공급자는 Anthropic"));
   assert.ok(setup.includes("개별 모델이나 모델 deployment 이름을 선택하지 않습니다"));
+  const subscription = setup.match(/<tr><td>Subscription<\/td>([\s\S]*?)<\/tr>/)?.[1];
+  assert.ok(subscription);
+  assert.ok(subscription.includes("&lt;YOUR_SUBSCRIPTION_NAME&gt;"));
+  assert.ok(subscription.includes("&lt;YOUR_SUBSCRIPTION_ID&gt;"));
+  assert.ok(!/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i.test(subscription),
+    "Published subscription examples must use placeholders, not actual subscription identifiers");
   assert.ok(!/Azure-SRE-Agent-Samples에서.*코드.*조회/.test(setup));
 });
 
