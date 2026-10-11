@@ -102,7 +102,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-10-01' = {
       {
         name: 'system'
         mode: 'System'
-        count: 2
+        count: 3
         vmSize: nodeVmSize
         osType: 'Linux'
         osSKU: 'Ubuntu'
