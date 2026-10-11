@@ -424,6 +424,20 @@ test("IDE integration checks server support before requiring SRE Agent-specific 
     "A docs tool identifier must not be treated as an always-visible picker item");
   assert.ok(!ide.includes('args": ["-y", "@azure/mcp@latest", "server", "start"]'),
     "Do not promise an unverified package upgrade restores SRE Agent support");
+  assert.ok(ide.includes("3.0.0-beta.13"));
+  assert.ok(ide.includes("npx --yes @azure/mcp@3.0.0-beta.50 tools list --namespace sreagent --name-only"));
+  const config = ide.match(/<pre id="sre-mcp-config"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.ok(config);
+  assert.deepEqual(JSON.parse(config), {
+    servers: {
+      "azure-sre-preview": {
+        type: "stdio", command: "npx",
+        args: ["--yes", "@azure/mcp@3.0.0-beta.50", "server", "start",
+          "--namespace", "sreagent", "--mode", "all"]
+      }
+    }
+  });
+  assert.ok(ide.includes("다른 MCP 서버 설정은 그대로"));
 });
 
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
