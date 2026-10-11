@@ -392,9 +392,7 @@ bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts</code></pre>
 <div class="table-wrap"><table id="response-handler-values"><thead><tr><th>필드</th><th>입력값</th></tr></thead><tbody>
 <tr><td>Name</td><td><code>payment-failure-handler</code></td></tr>
 <tr><td>Instructions</td><td>아래 50자 이상의 지침을 입력합니다.</td></tr>
-<tr><td>Handoff Description</td><td><code>결제 실패 경고 조사 담당.</code></td></tr>
 <tr><td>Built-in Tools / Custom Tools</td><td><strong>기본 상속 유지</strong> — 별도 도구 선택/override하지 않음</td></tr>
-<tr><td>Handoff Agents</td><td>추가 선택하지 않음</td></tr>
 </tbody></table></div>
 <pre class="prompt" id="response-handler-instructions"><code>결제 서비스의 실패 경고를 조사하는 담당 Agent야. 보고된 문제의 원인과 서비스에 미치는 영향 범위를 파악하고 조사 결과를 알려 줘.</code></pre>
 <p>생성 화면의 Instructions는 최소 50자여야 합니다. 위 지침은 역할과 조사 목적만 정의하며 조회 방법이나 원인 후보를 지정하지 않습니다. 이 길이 조건은 Custom Agent 설정용 지침에 적용되는 것이며, 일반 채팅 질문을 길게 작성하라는 뜻이 아닙니다.</p>
@@ -565,12 +563,12 @@ cp operations/service-context.md artifacts/service-context.md</code></pre>
 <pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
 <p>Agent가 description을 바탕으로 필요한 Skill을 스스로 선택·로드하는지, 실제 도구 호출과 조사 결과를 확인합니다. 어떤 Skill을 사용할지는 Agent가 판단합니다.</p>
 </li><li>동시 활성 Skill은 최대 <strong>5개</strong>이며 초과 시 가장 오래된 것이 unload됩니다. conversation compaction 시 활성 Skill이 해제되고 필요하면 SKILL.md를 다시 읽어야 합니다. Skill의 도구는 활성 상태에서만 사용할 수 있으므로 항상 영구 노출된다고 가정하지 않습니다.</li></ol>
-<h3>6-2. 전문 Agent와 인계</h3>
-<ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Custom Agent</span>Name <code>payment-specialist</code>, Instructions는 아래 50자 이상의 지침, Handoff Description은 <code>결제 실패와 지연 조사 담당.</code>을 넣습니다. Built-in/Custom Tools는 별도 선택 없이 기본 상속을 유지합니다. 뒤에서 만들 summary 도구를 이 단계에서 요구하지 않습니다.
+<h3>6-2. 전문 Agent 만들기와 호출</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Custom Agent</span>사용자 지정 에이전트 이름은 <code>payment-specialist</code>, 지침은 아래 50자 이상의 문장을 입력합니다. 도구는 별도 선택 없이 기본 상속을 유지합니다. 뒤에서 만들 summary 도구를 이 단계에서 요구하지 않습니다.
 <pre class="prompt" id="payment-specialist-instructions"><code>결제 서비스의 문제를 조사하는 담당 Agent야. 보고된 실패나 지연의 원인과 서비스에 미치는 영향 범위를 파악하고 조사 결과를 알려 줘.</code></pre>
 </li><li>Skill 설정에서 <code>payment-investigation</code>을 선택합니다. YAML에서는 <code>allowed_skills</code>에 그 이름을 넣습니다. 모든 Skill을 허용하려면 <code>enable_skills: true</code>를 사용하지만 이번에는 해당 Skill만 연결합니다.</li><li>저장/Apply 후 새 chat의 <code>/agent</code> picker에서 <code>payment-specialist</code>를 선택하고 다음을 입력합니다.
 <pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
-<p>담당 Agent 이름, Skill 로드와 실제 도구 결과를 확인합니다. 명시적 담당 선택을 시험하는 것이므로 자동 인계 성공으로 기록하지 않습니다.</p></li><li><strong>Custom Agent 간 인계 설정:</strong> <span class="path">Agent → Builder → Agent Canvas → payment-specialist 선택 → 편집</span>의 <strong>Handoff Agents</strong>에서 이 Custom Agent 다음에 조사를 이어받을 <strong>다른 Custom Agent</strong>를 선택합니다. 이번처럼 담당 하나만 사용할 때는 비워 두면 됩니다. 이 항목은 기본 Agent의 자동 담당 선택 목록이 아닙니다. 일반 chat에서 Skill의 자동 선택은 6-1에서, 전문 Agent의 명시적 선택은 위 <code>/agent</code> 단계에서 확인합니다. 실제 인계가 발생하면 기록을 확인하며, 인계는 같은 thread 맥락을 공유하므로 새 컨텍스트가 아닙니다.</li></ol>
+<p>담당 Agent 이름, Skill 로드와 실제 도구 결과를 확인합니다. 명시적 담당 선택을 시험하는 것이므로 자동 인계 성공으로 기록하지 않습니다.</p></li></ol>
 <h3>6-3. Python 도구 만들기와 입력 계약 검증 (Optional)</h3>
 <p>이 도구는 <strong>입력으로 받은 측정값만</strong> 요약합니다. Azure를 조회하거나 설정을 바꾸지 않으므로 관리 ID 인증과 외부 패키지가 필요하지 않습니다. 관측 도구와 계산 도구의 증거 책임을 구분하는 연습입니다.</p>
 <ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Tool → Python tool</span>Name <code>summarize_payments</code>, Description <code>입력된 결제 측정값의 실패율과 p95를 계산한다.</code>을 입력합니다. Code / Test playground / Identity 탭을 확인합니다.</li><li><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/tools/summarize_payments.py">summarize_payments.py</a>의 전체 코드를 Code에 넣습니다. <code>main(samples_json: str) -&gt; dict</code>이고 입력은 string 하나입니다. Identity는 Azure 호출이 없으므로 추가 elevation을 쓰지 않고 Packages는 비워 둡니다.</li><li>Test playground의 <strong>samples_json 필드</strong>에 내부 배열 문자열을 입력합니다. UI가 named parameter JSON을 받으면 아래 전체 객체를 사용합니다.<pre><code>{
@@ -600,7 +598,7 @@ python3 -c 'import json; from tools.inspect_pods import main; print(json.dumps(m
   "percentileDefinition": "nearest-rank",
   "note": "Caller-provided measurements only; does not independently prove Azure recovery."
 }</code></pre>
-<p>기본 확인 항목은 Skill 설정·로드 기록과 <code>/agent</code> 담당 선택·인계 기록입니다. Python 도구를 만든 경우에만 정상/누락/경계/오류 입력을 비교합니다. 6-3에서 카드만 넣으면 bank count=0, p95=null, missingMethods=["bank"], recovered=false여야 합니다. 1000.1ms나 실패 요청이 있으면 recovered=false입니다.</p>
+<p>기본 확인 항목은 Skill 설정·로드 기록과 <code>/agent</code> 담당 선택·호출 결과입니다. Python 도구를 만든 경우에만 정상/누락/경계/오류 입력을 비교합니다. 6-3에서 카드만 넣으면 bank count=0, p95=null, missingMethods=["bank"], recovered=false여야 합니다. 1000.1ms나 실패 요청이 있으면 recovered=false입니다.</p>
 <figure class="official-figure" data-image-id="create-skill" data-docs-url="https://learn.microsoft.com/en-us/azure/sre-agent/skills">
 <img src="https://learn.microsoft.com/en-us/azure/sre-agent/media/skills/portal-create-skill.png" alt="Microsoft Learn: Skill 생성과 지침 파일·도구 선택 화면" loading="lazy" decoding="async" referrerpolicy="no-referrer">
 <p class="image-error" hidden>공식 이미지를 불러오지 못했습니다. 인터넷 연결을 확인하거나 아래 원문 링크를 여세요.</p>
@@ -617,7 +615,7 @@ python3 -c 'import json; from tools.inspect_pods import main; print(json.dumps(m
 <figcaption><strong>보는 곳:</strong> Code/Test playground/Identity 탭과 main 함수의 입력·반환 계약을 구분합니다. 이미지 속 코드를 복사하지 말고 이 워크샵의 summarize_payments를 사용합니다. 공식 참고 화면입니다.<br>출처: Microsoft · <a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-python-tool">Microsoft Learn — Python tool</a> · <a href="https://github.com/MicrosoftDocs/azure-docs/blob/main/LICENSE">CC BY 4.0</a></figcaption>
 <button type="button" data-enlarge disabled>이미지 확대</button></figure>
 </details>
-<label class="check"><input type="checkbox" data-check="lab6">Skill 선택과 전문 Agent 인계를 확인했다.</label>
+<label class="check"><input type="checkbox" data-check="lab6">Skill 선택과 전문 Agent 호출을 확인했다.</label>
 </section>
 
 <section id="lab7">

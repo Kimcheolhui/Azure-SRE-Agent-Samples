@@ -326,7 +326,7 @@ test("Lab 6 Python tools are optional with a skippable dependent PostToolUse exe
   assert.ok(lab.includes("6-3. Python 도구 만들기와 입력 계약 검증 (Optional)"));
   assert.ok(lab.includes("6-4. Pod 상태를 해석하는 Python 도구 (Optional)"));
   assert.ok(lab.includes("생략하고 Lab 7로 진행해도 됩니다"));
-  assert.ok(lab.includes('data-check="lab6">Skill 선택과 전문 Agent 인계를 확인했다.'));
+  assert.ok(lab.includes('data-check="lab6">Skill 선택과 전문 Agent 호출을 확인했다.'));
   assert.ok(lab.includes('data-result-json="summary-tool"'),
     "Optional examples and tool instructions should remain available");
   const hook = html.split("<h3>9-4.")[1]?.split("<p class=\"sources\">")[0];
@@ -397,16 +397,16 @@ test("Lab 13 is absent from content, navigation, outputs and progress", () => {
   assert.equal([...html.matchAll(/data-output-for="/g)].length, 17);
 });
 
-test("handoff setup identifies the Custom Agent editor instead of an unverified default-agent list", () => {
-  const specialist = html.split("<h3>6-2. 전문 Agent와 인계</h3>")[1]?.split("<h3>6-3.")[0];
+test("Custom Agent setup uses the visible form without unverified handoff fields", () => {
+  const specialist = html.split("<h3>6-2. 전문 Agent 만들기와 호출</h3>")[1]?.split("<h3>6-3.")[0];
   assert.ok(specialist);
-  assert.ok(specialist.includes("Agent → Builder → Agent Canvas → payment-specialist 선택 → 편집"));
-  assert.ok(specialist.includes("<strong>Handoff Agents</strong>"));
-  assert.ok(specialist.includes("<strong>다른 Custom Agent</strong>"));
-  assert.ok(specialist.includes("담당 하나만 사용할 때는 비워 두면 됩니다"));
-  assert.ok(specialist.includes("기본 Agent의 자동 담당 선택 목록이 아닙니다"));
+  assert.ok(specialist.includes("사용자 지정 에이전트 이름은 <code>payment-specialist</code>"));
+  assert.ok(specialist.includes("지침은 아래 50자 이상의 문장"));
+  assert.ok(specialist.includes("도구는 별도 선택 없이 기본 상속을 유지"));
+  assert.ok(specialist.includes("payment-investigation"));
   assert.ok(specialist.includes("<code>/agent</code>"));
-  assert.ok(!html.includes("기본 Agent의 Handoff Agents 목록에"));
+  assert.ok(!/Handoff Agents|Handoff Description/.test(html),
+    "Do not require handoff controls that have not been verified in the current UI");
 });
 
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
