@@ -52,6 +52,31 @@ test("Lab 2 incident prompt only contains the user's symptom and investigation r
   assert.ok(!lab.includes("발생 구간과 변경 금지 조건만 전달"));
 });
 
+test("each remaining Lab 2 incident has a symptom-only Agent prompt before recovery", () => {
+  const lab = html.split('<section id="lab2">')[1]?.split("</section>")[0];
+  assert.ok(lab);
+  for (const [scenario, expectedPrompt] of [
+    ["payment-exception", "카드 결제가 실패한다는 보고가 있어. 원인과 영향 범위를 조사해 줘."],
+    ["unavailable", "카드와 계좌 결제가 모두 실패한다는 보고가 있어. 원인과 영향 범위를 조사해 줘."],
+    ["image-pull-failure", "새 버전 배포가 완료되지 않는다는 보고가 있어. 원인과 영향 범위를 조사해 줘."]
+  ]) {
+    const start = lab.indexOf(`bash scripts/scenario.sh "$RG" "$CLUSTER" ${scenario}`);
+    assert.ok(start >= 0, `Missing incident setup: ${scenario}`);
+    const recovery = lab.indexOf('bash scripts/scenario.sh "$RG" "$CLUSTER" healthy', start);
+    assert.ok(recovery > start, `Missing recovery after ${scenario}`);
+    const investigation = lab.slice(start, recovery);
+    assert.ok(investigation.includes("SRE Agent 채팅에 다음 문장을 입력합니다."));
+    const prompt = investigation.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+    assert.equal(prompt, expectedPrompt);
+    assert.ok(investigation.includes("Agent의 조사가 끝난 뒤"));
+  }
+  for (const [, block] of lab.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)) {
+    assert.ok(!(block.includes('bash scripts/scenario.sh "$RG" "$CLUSTER" healthy') &&
+      /\b(?:payment-exception|unavailable|image-pull-failure)\b/.test(block)),
+    "An incident setup block must not restore the workload before the Agent can investigate");
+  }
+});
+
 test("Lab 1 embeds the Kubernetes queries and executable read-only inspection commands", () => {
   const logs = html.match(/<li id="lab1-kubernetes-logs">([\s\S]*?)<\/li>/)?.[1];
   const cli = html.match(/<li id="lab1-kubernetes-cli">([\s\S]*?)<\/li>/)?.[1];

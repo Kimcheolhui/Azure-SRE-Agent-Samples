@@ -307,17 +307,22 @@ bash scripts/scenario.sh "$RG" "$CLUSTER" dependency-slow
 node scripts/traffic.mjs "$APP_URL" 20 dependency-slow</code></pre>학습자 스크립트는 provider의 SIGNATURE_ITERATIONS를60000→16000000으로 바꿉니다. 실제 PBKDF2 계산이 증가하는 구성 변화이지 sleep/장애 switch가 아닙니다. API는 같은 코드로 계속 의존 요청을 처리합니다.</li><li>podName/namespace별 요청·종속성, provider CPU/로그와 Deployment 변경을 확인합니다. traceId 조인은 queries/investigation.kql을 사용합니다.</li><li>Agent에는 아래 증상과 조사 요청만 전달합니다. 조사 대상 선택·데이터 조회·원인 검증은 Agent에 맡깁니다.<pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre></li><li>Reasoning/도구 호출 상세에서 조사한 질문, 실행한 조회와 결과를 확인합니다. 실제 조회 데이터가 답변의 결론을 뒷받침하는지 비교합니다.</li><li>복구 후 다시 측정합니다.<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
 node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre></li></ol>
 <h3>2-2. 예외와 전체 불가도 각각 반복</h3>
+<p><strong>카드 결제 실패</strong></p>
 <pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" payment-exception
-node scripts/traffic.mjs "$APP_URL" 20 payment-exception
-# 예외 쿼리와 Agent RCA 수행 후
-bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
-node scripts/traffic.mjs "$APP_URL" 20 healthy
-
-bash scripts/scenario.sh "$RG" "$CLUSTER" unavailable
+node scripts/traffic.mjs "$APP_URL" 20 payment-exception</code></pre>
+<p>SRE Agent 채팅에 다음 문장을 입력합니다.</p>
+<pre class="prompt"><code>카드 결제가 실패한다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
+<p>Agent의 조사가 끝난 뒤 복구합니다.</p>
+<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
+node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre>
+<p><strong>전체 결제 실패</strong></p>
+<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" unavailable
 node scripts/traffic.mjs "$APP_URL" 20 unavailable
-curl -i "$APP_URL/health"
-# 전체 불가 RCA 수행 후
-bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
+curl -i "$APP_URL/health"</code></pre>
+<p>SRE Agent 채팅에 다음 문장을 입력합니다.</p>
+<pre class="prompt"><code>카드와 계좌 결제가 모두 실패한다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
+<p>Agent의 조사가 끝난 뒤 복구합니다.</p>
+<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
 node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre>
 <p>payment-exception은 CARD_MERCHANT_ACCOUNT를 비우고, unavailable은 provider replica를0으로 변경합니다. healthy는 학습자 로컬 release artifact의 이미지 digest, merchant 값, provider 계산량과 replica를 복원합니다. 이 변경표와 복구안은 Agent에 보여 주지 않습니다. 서비스에는 scenario 값이 없고 결과에는 실제 오류/성공만 남습니다.</p>
 <h3>2-3. Kubernetes 이미지 배포 실패</h3>
@@ -325,9 +330,11 @@ node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre>
 kubectl -n payments get pods -l app=payment-api
 kubectl -n payments describe deployment payment-api
 kubectl -n payments get events --sort-by=.metadata.creationTimestamp
-kubectl -n payments rollout history deployment/payment-api
-# 조사 후 학습자 로컬 release artifact와 정상 설정으로 복원
-bash scripts/scenario.sh "$RG" "$CLUSTER" healthy</code></pre>
+kubectl -n payments rollout history deployment/payment-api</code></pre>
+<p>SRE Agent 채팅에 다음 문장을 입력합니다.</p>
+<pre class="prompt"><code>새 버전 배포가 완료되지 않는다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
+<p>Agent의 조사가 끝난 뒤 학습자 로컬 release artifact와 정상 설정으로 복원합니다.</p>
+<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" healthy</code></pre>
 <p>스크립트는 실제 ACR에 없는40자리 이미지 tag를 선택합니다. tag나 annotation에 missing/fault/workshop 같은 설명을 붙이지 않습니다. 새 Pod의 ImagePullBackOff와 실제 registry 조회 실패로 조사하게 합니다. maxUnavailable=0이면 이전 Pod가 서비스할 수 있으며, 실패한 배포와 서비스 중단을 구분합니다.</p>
 <h3>2-4. Deep Investigation과 Code Interpreter</h3>
 <ol class="steps"><li>카드 지연을 다시 만든 후 현재 스레드의 Deep Investigation 기능을 실행하거나 “Deep Investigation으로 같은 구간을 더 조사해 줘”라고 요청합니다. 기능이 노출되지 않으면 미지원으로 기록합니다. 깊은 조사도 동일 대상/구간/읽기 전용 제약을 유지합니다.</li><li>앞선 일반 조사와 원본 개수, 쿼리 수, 새로 확인한 사실, 스레드 사용량을 비교합니다. 더 긴 답변이 더 정확하다는 보장은 없습니다.</li><li>App Insights Logs 결과를 CSV로 export/download하고 채팅 파일 업로드에 첨부합니다. “Code Interpreter로 카드/계좌 p95와 분당 실패율을 계산하고 CSV·그래프를 만들어 줘. 빈 구간은 0이 아니라 누락으로 표시해”라고 요청합니다.</li><li>입력 CSV 행 수, 필터 구간, 지연 단위(ms), percentile 정의를 확인하고 KQL 결과와 대조합니다. Code Interpreter의 데이터 처리와 Azure 권한이 필요한 custom Python 도구는 다른 기능입니다.</li><li>결과 파일을 내려받아 로컬 보고서에 첨부하고 다시 <code>healthy</code>로 복구합니다.</li></ol>
