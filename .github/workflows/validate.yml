@@ -19,5 +19,6 @@ jobs:
       - run: npm test
         working-directory: samples/payment-api
       - run: node scripts/verify-workshop.mjs
+      - run: node --test scripts/test/*.test.mjs
       - run: python3 -m unittest discover -s tools/tests -v
       - run: bash -n scripts/deploy.sh scripts/scenario.sh

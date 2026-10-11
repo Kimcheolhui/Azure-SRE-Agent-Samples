@@ -1,14 +1,28 @@
 # Azure SRE Agent self-study samples
 
-Azure SRE Agent 학습 가이드 **3~6장**을 직접 구성해 보는 한국어 워크샵입니다.
-브라우저에서 [HTML 워크샵](docs/workshop.html)을 열고 Lab 0부터 순서대로 진행하세요.
+Azure SRE Agent 학습 가이드 **1~7장 전체 105개 절**의 설명·구성·판단을 확인하는 한국어 워크샵입니다.
+브라우저에서 [HTML 워크샵](docs/workshop.html)을 열고 **학습 A → Lab 0~13 → 학습 B → 학습 C → 회상 → 정리** 순서로 진행하세요.
 GitHub의 HTML 소스 화면 대신 저장소를 clone한 뒤 로컬 파일을 열어야 합니다.
+
+## 이해도 점검 기준
+
+- **학습 A:** 1~2장 고객 영향/경쟁 가설, Monitor·Runbook·Agent·사람 역할, 상태별 증거와 인수인계.
+- **Lab 0~13:** 3~6장의 실제 구성·조사·복구·통제·반복 운영. 유료 심화 구성을 생략해도 설계 과제와 회상은 필수입니다.
+- **학습 B:** 7장 신뢰 한계/도입표, AAU 직접 계산과 필터별 CSV, 한도·Stop·Delete의 재개, 생성/scope 권한·리전·감사.
+- **학습 C:** 기존 정답표 없이 새 사건 세 개, 생략 기능 설계, 실제 조사/복구와 1페이지 보고서. 20점 중 18점 이상이고 네 안전 항목 모두 2점.
+- **105개 회상 카드:** 각 절의 설명 항목·원본 질문에 자신의 말로 답하고 적용·한계·실패 다음 행동을 설명해야 2점입니다.
+- **24시간/7일 재시험:** 전체 회상과 사건 적용을 다시 확인합니다. 유료 리소스를 보관할 필요 없이 오프라인으로 복습할 수 있습니다.
+
+Lab 완료 체크와 개념 자기점수는 별도로 저장됩니다.
+모든 자기점수가 통과해도 실제 구성 검증·운영 승인·학습 인증을 자동 보증하지 않습니다.
+미지원 기능은 “개념 확인, 실제 구성 미검증”으로 표시하세요.
 
 ## 구성
 
 | 경로 | 용도 |
 |---|---|
 | [docs/workshop.html](docs/workshop.html) | 클릭 경로, 생성 값, 프롬프트, 검증, 정리 절차를 포함한 오프라인 HTML |
+| [docs/curriculum.json](docs/curriculum.json) | 원본 105개 절의 번호·주제·질문·해설과 출처 해시 |
 | [samples/payment-api](samples/payment-api) | Node.js 결제 API + 실제 HTTP로 호출하는 로컬 provider stub |
 | [infra/main.bicep](infra/main.bicep) | Linux B1 App Service, Log Analytics, Application Insights |
 | [scripts/deploy.sh](scripts/deploy.sh) | 배포 commit 고정, 리소스 생성, ZIP 배포 |
@@ -76,6 +90,8 @@ SDK가 자동 생성한 `operation_Id`에 의존하지 않고 명시적 `traceId
 
 ## 검증과 안전
 
+- `node scripts/verify-workshop.mjs`: 1~7장 105개 절의 과제/회상 매핑, 20개 체크와 통합 채점표/HTML 검증.
+- `node --test scripts/test/*.test.mjs`: 누락·중복 매핑과 해설 HTML 생성 검증.
 - `npm test`: 카드만 지연되는지(>=1,700 ms), 계좌는 빠른지(<1,000 ms), 예외/503/입력 오류를 검증합니다.
 - 실제 SDK의 요청·종속성·예외 envelope도 로컬 HTTPS 수집기로 검증합니다.
   이 테스트는 설치된 OpenSSL로 임시 인증서를 만들고 종료 시 정리하며, Azure에 전송하지 않습니다.
@@ -85,6 +101,16 @@ SDK가 자동 생성한 `operation_Id`에 의존하지 않고 명시적 `traceId
 - 공개 HTTP 장애 제어 엔드포인트는 없습니다. App Service 구성 변경 권한이 있어야 장애를 바꿀 수 있습니다.
 - App Insights 연결 문자열, HTTP Trigger URL, GitHub 키/토큰은 Git에 저장하지 마세요.
 - 리소스를 실제 Azure에 배포하고 SRE Agent를 실행하는 검증은 학습자 구독에서 별도로 수행해야 합니다.
+
+회상 카드는 `curriculum.json`에서 단일 HTML에 포함되므로 `file://`에서도 JSON fetch 없이 동작합니다.
+원본 자료 변경 시 아래 생성기로 갱신합니다. 원본은 1~7장 각 절을 포함한 `study-content.json`이어야 합니다.
+
+```bash
+node scripts/build-curriculum.mjs ../Azure-SRE-Agent-Study/study-content.json
+node scripts/verify-workshop.mjs
+# JSON 변경 후 HTML 회상 부분만 다시 생성
+node scripts/build-curriculum.mjs
+```
 
 ## 정리
 

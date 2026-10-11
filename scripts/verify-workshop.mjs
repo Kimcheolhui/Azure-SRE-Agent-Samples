@@ -3,6 +3,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Script } from "node:vm";
 import assert from "node:assert/strict";
+import { collectMappings, chapterCounts, renderCurriculum, insertCurriculum } from "./build-curriculum.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const html = readFileSync(resolve(root, "docs/workshop.html"), "utf8");
@@ -24,27 +25,24 @@ for (const match of markup.matchAll(/<(\/?)([a-z][a-z0-9-]*)\b[^>]*>/gi)) {
   else stack.push(tag);
 }
 assert.equal(stack.length, 0, "Unclosed HTML tags");
-const covered = new Set();
-for (const [, spec] of html.matchAll(/data-covers="([^"]+)"/g)) {
-  for (const range of spec.split(",")) {
-    const match = range.trim().match(/^([3-6])\.(\d+)(?:-\1\.(\d+))?$/);
-    assert.ok(match, `Invalid coverage range: ${range}`);
-    const [, chapter, from, to = from] = match;
-    for (let section = Number(from); section <= Number(to); section++) {
-      const key = `${chapter}.${section}`;
-      assert.ok(!covered.has(key), `Duplicate coverage: ${key}`);
-      covered.add(key);
-    }
-  }
-}
-for (const [chapter, count] of [[3, 22], [4, 15], [5, 18], [6, 31]]) {
+const covered = collectMappings(markup);
+for (const [index, count] of chapterCounts.entries()) {
+  const chapter = index + 1;
   for (let section = 1; section <= count; section++) {
     assert.ok(covered.has(`${chapter}.${section}`), `Missing original section ${chapter}.${section}`);
   }
 }
-assert.equal(covered.size, 86, "Unexpected section count");
-const checks = [...html.matchAll(/data-check="([^"]+)"/g)].map((match) => match[1]);
-assert.equal(checks.length, 15);
+assert.equal(covered.size, 105, "Unexpected section count");
+const curriculum = JSON.parse(readFileSync(resolve(root, "docs/curriculum.json"), "utf8"));
+assert.equal(insertCurriculum(html, renderCurriculum(curriculum, html)), html, "Recall cards are stale");
+const scores = [...markup.matchAll(/data-score="([^"]+)"/g)].map(match => match[1]);
+assert.equal(scores.length, 105);
+assert.equal(new Set(scores).size, 105);
+assert.ok(scores.every(number => covered.has(number)), "Assessment section has no exercise");
+assert.equal([...markup.matchAll(/data-rubric="/g)].length, 10);
+assert.equal([...markup.matchAll(/data-safety="true"/g)].length, 4);
+const checks = [...markup.matchAll(/data-check="([^"]+)"/g)].map((match) => match[1]);
+assert.equal(checks.length, 20);
 assert.equal(checks.length, new Set(checks).size);
 for (const [, source] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
   new Script(source);
@@ -52,7 +50,7 @@ for (const [, source] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
 for (const file of ["samples/payment-api/package-lock.json", "infra/main.bicep",
   "scripts/deploy.sh", "scripts/scenario.sh", "scripts/traffic.mjs",
   "operations/service-context.md", "operations/payment-investigation/SKILL.md",
-  "tools/summarize_payments.py", "operations/recovery-check.txt"]) {
+  "tools/summarize_payments.py", "operations/recovery-check.txt", "docs/curriculum.json"]) {
   assert.ok(existsSync(resolve(root, file)), `Missing workshop artifact: ${file}`);
 }
-console.log(`Workshop verified: ${covered.size} original sections, ${checks.length} checkpoints, anchors and JavaScript valid.`);
+console.log(`Workshop verified: ${covered.size} sections and recall cards, ${checks.length} task checks, capstone, anchors and JavaScript valid.`);
