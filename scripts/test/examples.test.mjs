@@ -349,6 +349,10 @@ test("Lab 7 connects the entire Samples repository without requiring a runtime-o
   const readme = readFileSync(new URL("../../README.md", import.meta.url), "utf8");
   assert.ok(readme.includes("이 저장소의 문서·테스트·배포 스크립트도 연결 범위에 포함"));
   assert.ok(!readme.includes("이 저장소 전체 Code Access를 허용하지 마세요"));
+  assert.ok(lab.includes('export KUBECONFIG="$PWD/artifacts/kubeconfig-$CLUSTER"'));
+  assert.ok(lab.includes("kubectl config current-context"));
+  assert.ok(lab.includes('unknown command "oidc-login"'));
+  assert.ok(lab.includes("스크립트의 export가 부모 터미널에 자동 반영되지는 않습니다"));
 });
 
 test("advanced GitHub authentication, Lab 8 and PostToolUse carry the requested Optional labels", () => {
