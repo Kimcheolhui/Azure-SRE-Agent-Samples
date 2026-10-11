@@ -54,6 +54,12 @@ East US 2의 Model provider에서 Anthropic을 선택하고, 기본값이 Anthro
 Agent 이름에는 `sre-`, 리소스 그룹에는 `rg-` 접두사를 사용하고 자동 생성되는 관측 리소스의 이름은 배포 후 확인합니다.
 워크샵은 생성 절차를 안내할 뿐 위 Agent 리소스를 자동 생성하지 않습니다.
 평가 전에는 코드·지식·인시던트·예약 연결을 추가하지 않고 실제 읽기 조회를 먼저 확인합니다.
+Azure 리소스에서 RG를 Reader로 성공적으로 추가하면 같은 RG의 LAW/App Insights에
+Log Analytics Reader/Monitoring Reader 등 상속 권한이 적용됩니다. 실제 실행 UAMI의 IAM 역할은 확인해야 합니다.
+초기 **로그 +** 카드는 조사 원본을 지정하는 별도 설정으로,
+`law-aks-payment-kch01x7`과 현재 지원되는 경우 `appi-aks-payment-kch01x7`을 선택합니다.
+Agent 생성 시 자동 생성한 감사용 App Insights/LAW를 workload 로그 원본으로 대신 선택하지 않습니다.
+로그 카드 표시와 query 권한은 동일하지 않으며 다른 RG의 workspace, access mode/네트워크, 별도 connector 신원을 구분합니다.
 Pod 접근에는 Agent 실행 UAMI의 AKS credential 역할과 `payments` namespace data-plane Reader가 별도로 필요합니다.
 
 ## 로컬 실행

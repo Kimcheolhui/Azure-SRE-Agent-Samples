@@ -70,6 +70,18 @@ test("Agent creation includes concrete names, separate observability and neutral
   assert.ok(!/Azure-SRE-Agent-Samples에서.*코드.*조회/.test(setup));
 });
 
+test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
+  const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
+  for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
+    "같은 RG에 있는 LAW와 App Insights는 이 역할을 상속",
+    "LAW가 다른 RG에 있으면", "workspace access mode",
+    "Agent의 실제 tool result", "Agent 자체 감사 데이터와 workload 데이터를 구분"]) {
+    assert.ok(setup?.includes(text), `Missing logs setup distinction: ${text}`);
+  }
+  assert.ok(setup.includes("API key가 필요하다고 임의로 가정"));
+  assert.ok(setup.includes("로그 ‘권장’ 표시"));
+});
+
 test("integrated practice output contains record format rather than grading", () => {
   const match = html.match(/<details class="result-example" id="output-capstone"[\s\S]*?<\/details>/);
   assert.ok(match);
