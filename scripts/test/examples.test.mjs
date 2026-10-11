@@ -22,6 +22,17 @@ test("normal measured CLI example preserves native JSONL shape and recovery thre
   }
 });
 
+test("request duration percentiles use numeric milliseconds without timespan division", () => {
+  const investigation = readFileSync(new URL("../../queries/investigation.kql", import.meta.url), "utf8");
+  for (const contents of [html, investigation]) {
+    assert.ok(contents.includes("p95Ms=percentile(duration, 95)"));
+    assert.ok(contents.includes("p95Ms=percentile(DurationMs, 95)"));
+    assert.ok(!/(?:duration|DurationMs)\s*\/\s*\d+(?:ms|s|m|h|d)\b/.test(contents),
+      "Numeric millisecond durations must not be divided by a timespan");
+  }
+  assert.ok(html.includes("<code>duration</code>은 이미 밀리초 단위의 <code>real</code> 값입니다"));
+});
+
 test("Hook rejection has a nonempty reason and private AKS output is explicitly illustrative", () => {
   const hook = JSON.parse(resultCode("hook"));
   assert.equal(hook.ok, false);

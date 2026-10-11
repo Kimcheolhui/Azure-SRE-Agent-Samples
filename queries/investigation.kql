@@ -1,11 +1,12 @@
 // Run each block separately in Application Insights > Logs (resource context).
+// requests/dependencies duration is already a real value in milliseconds.
 requests
 | where timestamp > ago(30m) and name == "GET /pay"
 | extend method = tostring(customDimensions.paymentMethod),
          commit = tostring(customDimensions.sourceCommit),
          pod = tostring(customDimensions.podName)
 | summarize count=count(), failures=countif(success == false),
-            p95Ms=percentile(duration / 1ms, 95)
+            p95Ms=percentile(duration, 95)
   by bin(timestamp, 1m), method, commit, pod
 | order by timestamp asc
 

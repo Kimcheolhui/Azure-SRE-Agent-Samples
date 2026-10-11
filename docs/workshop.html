@@ -209,8 +209,8 @@ az role assignment create --assignee-object-id "$AGENT_PRINCIPAL" \
 | extend method=tostring(customDimensions.paymentMethod),
          commit=tostring(customDimensions.sourceCommit)
 | summarize count=count(), failures=countif(success == false),
-    p95Ms=percentile(duration / 1ms, 95)
-  by method, commit</code></pre></li><li>같은 편집기에서 각각 따로 실행합니다.<pre><code>dependencies
+    p95Ms=percentile(duration, 95)
+  by method, commit</code></pre><p><code>duration</code>은 이미 밀리초 단위의 <code>real</code> 값입니다. <code>1ms</code>로 나누지 않고 그대로 집계합니다.</p></li><li>같은 편집기에서 각각 따로 실행합니다.<pre><code>dependencies
 | where timestamp &gt; ago(30m) and name == "POST /authorize"
 | project timestamp, target, duration, success, customDimensions
 | order by timestamp desc
