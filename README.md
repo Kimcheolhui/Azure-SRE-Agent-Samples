@@ -37,17 +37,21 @@ MS Learn 공식 이미지15개는 원본 URL을 사용하므로 인터넷이 필
 | Agent 이름 | `sre-payments-kch01x7` |
 | 리전 | East US 2 (`eastus2`) |
 | 모델 공급자 | Anthropic 선택, 개별 모델은 서비스가 자동 선택 |
-| Agent Application Insights | `appi-agent-payments-kch01x7` |
-| Agent workspace | `law-agent-payments-kch01x7` |
+| Application Insights | 필수 항목에서 **Create new** 선택, Agent 배포 시 자동 생성 |
+| Agent workspace | 위 App Insights에 연결되는 LAW 자동 생성 |
 | 조사 대상 | `rg-payment-kch01x7` |
 | 초기 permission / mode | Reader / Review |
 | 월 active-flow 한도 초기값 | 5,000 AAU |
 
-Agent 관측용 workspace와 App Insights를 먼저 만들고 생성 화면에서 **기존 App Insights**로 연결합니다.
+SRE Agent 생성 화면에서 Resource group → **Create new**로 Agent 전용 RG를 만듭니다.
+Application Insights → **Create new**를 선택하면 App Insights와 연결된 LAW도 배포 과정에서 자동 생성됩니다.
+RG·App Insights·LAW를 Azure Portal에서 미리 만들 필요는 없습니다.
+배포 후 Agent → Monitor → Logs에서 실제 관측 리소스와 연결된 LAW를 확인합니다.
+이미 만들어 둔 Agent용 App Insights가 있다면 기존 리소스 선택도 가능하며 자동 생성과는 대안입니다.
 앱 관측용 `appi-aks-payment-kch01x7`의 연결 문자열이나 Kubernetes Secret은 바꾸지 않습니다.
 East US 2의 Model provider에서 Anthropic을 선택하고, 기본값이 Anthropic이면 유지합니다.
 별도 Anthropic API key나 모델 배포를 준비할 필요는 없습니다.
-Agent 이름에는 `sre-`, 리소스 그룹에는 `rg-`, 관측 리소스에는 `appi-`/`law-` 접두사를 사용합니다.
+Agent 이름에는 `sre-`, 리소스 그룹에는 `rg-` 접두사를 사용하고 자동 생성되는 관측 리소스의 이름은 배포 후 확인합니다.
 워크샵은 생성 절차를 안내할 뿐 위 Agent 리소스를 자동 생성하지 않습니다.
 평가 전에는 코드·지식·인시던트·예약 연결을 추가하지 않고 실제 읽기 조회를 먼저 확인합니다.
 Pod 접근에는 Agent 실행 UAMI의 AKS credential 역할과 `payments` namespace data-plane Reader가 별도로 필요합니다.

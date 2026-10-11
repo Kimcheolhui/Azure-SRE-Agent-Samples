@@ -45,8 +45,8 @@ test("Agent creation includes concrete names, separate observability and neutral
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   assert.ok(setup, "Agent creation instructions are missing");
   for (const text of ["rg-payment-agent-kch01x7", "sre-payments-kch01x7",
-    "appi-agent-payments-kch01x7", "law-agent-payments-kch01x7",
-    "East US 2", "Anthropic", "Workspace details", "기존 리소스 선택",
+    "East US 2", "Anthropic", "Resource group → Create new", "Application Insights",
+    "Create new", "Log Analytics workspace가 자동 생성",
     "5,000 AAU", "Principal (Object) ID", "Review", "Reader"]) {
     assert.ok(setup.includes(text), `Missing explicit creation choice: ${text}`);
   }
@@ -56,6 +56,10 @@ test("Agent creation includes concrete names, separate observability and neutral
   assert.ok(setup.includes("개별 모델이나 모델 deployment 이름을 선택하지 않습니다"));
   assert.ok(setup.includes('Model provider</td><td><strong>Anthropic</strong>'));
   assert.ok(!setup.includes("Azure OpenAI"));
+  assert.ok(!html.includes('export AGENT_APP_INSIGHTS='));
+  assert.ok(!html.includes('export AGENT_WORKSPACE='));
+  assert.ok(!setup.includes("Log Analytics workspaces” → Create"));
+  assert.ok(!setup.includes("Application Insights” → Create"));
   assert.ok(html.includes('export AGENT_NAME="sre-payments-$SUFFIX"'));
   const subscription = setup.match(/<tr><td>Subscription<\/td>([\s\S]*?)<\/tr>/)?.[1];
   assert.ok(subscription);
