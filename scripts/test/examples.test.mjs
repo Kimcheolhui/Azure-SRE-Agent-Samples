@@ -52,6 +52,8 @@ test("Agent creation includes concrete names, separate observability and neutral
   }
   assert.ok(setup.includes("payment-telemetry Secret에 넣지 않습니다"));
   assert.ok(setup.includes("scenario.sh·예상 RCA를 연결/업로드하지 않습니다"));
+  assert.ok(setup.includes("현재 기본 공급자는 Anthropic"));
+  assert.ok(setup.includes("개별 모델이나 모델 deployment 이름을 선택하지 않습니다"));
   assert.ok(!/Azure-SRE-Agent-Samples에서.*코드.*조회/.test(setup));
 });
 
