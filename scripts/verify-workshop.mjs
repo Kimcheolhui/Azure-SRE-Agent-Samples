@@ -77,7 +77,9 @@ for (const [, source] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
 for (const file of ["samples/payment-api/package-lock.json", "infra/main.bicep",
   "scripts/deploy.sh", "scripts/scenario.sh", "scripts/traffic.mjs",
   "operations/service-context.md", "operations/payment-investigation/SKILL.md",
-  "tools/summarize_payments.py", "operations/recovery-check.txt", "docs/curriculum.json", "docs/image-sources.json"]) {
+  "tools/summarize_payments.py", "tools/inspect_pods.py", "k8s/workload.yaml",
+  "samples/payment-api/Dockerfile", "scripts/connect.sh", "operations/recovery-check.txt",
+  "docs/curriculum.json", "docs/image-sources.json"]) {
   assert.ok(existsSync(resolve(root, file)), `Missing workshop artifact: ${file}`);
 }
 console.log(`Workshop verified: ${topics.size} reference topics, ${outputs.length} result examples, ${figures.length} credited figures, ${checks.length} progress checks and valid HTML/JavaScript.`);

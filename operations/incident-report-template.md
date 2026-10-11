@@ -3,12 +3,15 @@
 - Resource ID:
 - UTC symptom start / end:
 - Deployed source commit:
+- AKS cluster / namespace / Deployment:
+- Pod names / imageID digest / revision / readiness:
 - Fault scenario:
 - Card count / failure rate / p95:
 - Bank count / failure rate / p95:
 - Dependency evidence and query window:
 - Exception evidence:
 - Configuration / deployment changes:
+- Kubernetes event and audit evidence (not only Azure Activity Log):
 - Hypothesis A (support / contradiction):
 - Hypothesis B (support / contradiction):
 - Missing data or access errors:

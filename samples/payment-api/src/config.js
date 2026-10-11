@@ -15,6 +15,8 @@ function loadConfig(env = process.env) {
     port,
     scenario,
     commit: env.SOURCE_COMMIT || "local-uncommitted",
+    podName: env.POD_NAME || "local",
+    namespace: env.POD_NAMESPACE || "local",
     connectionString: env.APPLICATIONINSIGHTS_CONNECTION_STRING || ""
   };
 }

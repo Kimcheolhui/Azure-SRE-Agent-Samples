@@ -25,7 +25,8 @@ for (let round = 0; round < Number(countArg); round++) {
       const durationMs = Math.round(performance.now() - started);
       samples.push({ method, status: response.status, durationMs });
       console.log(JSON.stringify({ round: round + 1, method, status: response.status, durationMs,
-        sourceCommit: body.sourceCommit, scenario: body.scenario, requestId: body.requestId }));
+        sourceCommit: body.sourceCommit, scenario: body.scenario, requestId: body.requestId,
+        podName: body.podName, namespace: body.namespace }));
       const wantedStatus = expected === "unavailable" ? 503 :
         expected === "payment-exception" && method === "card" ? 500 : 200;
       if (expected && (response.status !== wantedStatus || body.scenario !== expected)) errors++;

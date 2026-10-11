@@ -22,15 +22,23 @@ test("normal measured CLI example preserves native JSONL shape and recovery thre
   }
 });
 
-test("Hook rejection has a nonempty reason and private output is explicitly illustrative", () => {
+test("Hook rejection has a nonempty reason and private AKS output is explicitly illustrative", () => {
   const hook = JSON.parse(resultCode("hook"));
   assert.equal(hook.ok, false);
   assert.ok(hook.reason.length > 0);
-  const version = JSON.parse(resultCode("private-version"));
-  assert.equal(version.httpStatus, 200);
-  assert.ok(version.resolvedAddresses[0].startsWith("10."));
-  assert.match(version.version.sourceCommit, /^[0-9a-f]{40}$/);
-  assert.ok(html.includes("가상 PE 주소"));
+  assert.ok(html.includes("enablePrivateCluster=true"));
+  assert.ok(html.includes("Pod 이름은 출력 형식 예시"));
+  assert.ok(html.includes("namespace RBAC Reader"));
+  assert.ok(!html.includes("azurewebsites.net"));
+});
+
+test("AKS instructions use Kubernetes scopes, immutable image and reconnect after rollout", () => {
+  assert.ok(html.includes("ImagePullBackOff"));
+  assert.ok(html.includes("Azure Kubernetes Service RBAC Writer"));
+  assert.ok(html.includes("$CLUSTER_ID/namespaces/sre-workshop"));
+  assert.ok(html.includes("port-forward"));
+  assert.ok(html.includes("digest"));
+  assert.ok(!/App Service|az webapp|Website Contributor|appsettings|app settings|read_workshop_version/.test(html));
 });
 
 test("integrated practice output contains record format rather than grading", () => {

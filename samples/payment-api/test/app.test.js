@@ -30,6 +30,7 @@ test("healthy card and bank payments emit request and dependency evidence", asyn
     const body = await response.json();
     assert.equal(body.paid, true);
     assert.equal(body.sourceCommit, "abc1234");
+    assert.equal(body.podName, "local");
   }
   assert.equal(events.dependencies.length, 2);
   assert.ok(events.dependencies.every((item) => item.success));
@@ -67,6 +68,15 @@ test("unavailable affects health and both payment methods", async (t) => {
     assert.equal((await fetch(`${base}${path}`)).status, 503);
   }
   assert.equal((await fetch(`${base}/version`)).status, 200);
+});
+
+test("Pod readiness identity is separate from injected business unavailability", async (t) => {
+  const { base } = await fixture(t, "unavailable");
+  const response = await fetch(`${base}/version`);
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(body.namespace, "local");
+  assert.equal((await fetch(`${base}/health`)).status, 503);
 });
 
 test("invalid input is explicit and HTTP cannot change fault configuration", async (t) => {

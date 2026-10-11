@@ -3,10 +3,11 @@ requests
 | where timestamp > ago(30m) and name == "GET /pay"
 | extend method = tostring(customDimensions.paymentMethod),
          scenario = tostring(customDimensions.scenario),
-         commit = tostring(customDimensions.sourceCommit)
+         commit = tostring(customDimensions.sourceCommit),
+         pod = tostring(customDimensions.podName)
 | summarize count=count(), failures=countif(success == false),
             p95Ms=percentile(duration / 1ms, 95)
-  by bin(timestamp, 1m), method, scenario, commit
+  by bin(timestamp, 1m), method, scenario, commit, pod
 | order by timestamp asc
 
 dependencies

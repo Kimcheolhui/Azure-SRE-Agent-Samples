@@ -19,7 +19,9 @@ function createApp(config, telemetry) {
       traceId,
       paymentMethod: method,
       scenario: config.scenario,
-      sourceCommit: config.commit
+      sourceCommit: config.commit,
+      podName: config.podName || "local",
+      namespace: config.namespace || "local"
     };
     let status = 200;
     let body;
@@ -90,7 +92,8 @@ function createApp(config, telemetry) {
     }
     const duration = performance.now() - started;
     res.writeHead(status, { "Content-Type": "application/json", "X-Request-Id": requestId });
-    res.end(JSON.stringify({ ...body, sourceCommit: config.commit, scenario: config.scenario }));
+    res.end(JSON.stringify({ ...body, sourceCommit: config.commit, scenario: config.scenario,
+      podName: properties.podName, namespace: properties.namespace }));
     telemetry.request({
       name: `${req.method} ${url.pathname}`,
       id: traceId,

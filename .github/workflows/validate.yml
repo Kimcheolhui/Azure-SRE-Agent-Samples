@@ -18,7 +18,27 @@ jobs:
         working-directory: samples/payment-api
       - run: npm test
         working-directory: samples/payment-api
+      - name: Build AKS container
+        run: docker build --build-arg SOURCE_COMMIT="${{ github.sha }}" -t sre-payment-test samples/payment-api
+      - name: Verify container runtime and non-root identity
+        run: |
+          docker run --rm --entrypoint node sre-payment-test -e '
+            const assert=require("node:assert/strict");
+            assert.equal(process.getuid(),1000);
+            const config=require("./src/config").loadConfig();
+            assert.equal(config.commit,process.env.SOURCE_COMMIT);
+            assert.match(config.commit,/^[0-9a-f]{40}$/);
+            const server=require("./src/app").createApp(config,{request(){},dependency(){},exception(){}});
+            server.listen(0,"127.0.0.1",async()=>{
+              try{
+                const response=await fetch(`http://127.0.0.1:${server.address().port}/pay?method=card`);
+                assert.equal(response.status,200);
+                assert.equal((await response.json()).paid,true);
+              }catch(error){console.error(error);process.exitCode=1;}
+              finally{server.close();server.closeAllConnections();}
+            });
+          '
       - run: node scripts/verify-workshop.mjs
       - run: node --test scripts/test/*.test.mjs
       - run: python3 -m unittest discover -s tools/tests -v
-      - run: bash -n scripts/deploy.sh scripts/scenario.sh
+      - run: bash -n scripts/deploy.sh scripts/scenario.sh scripts/connect.sh scripts/lib/aks.sh
