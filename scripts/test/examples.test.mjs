@@ -264,6 +264,17 @@ test("Lab 4 briefly introduces connector checks without unrelated setup referenc
   assert.ok(!lab.includes("특정 파일/대시보드 조회를 요청"));
 });
 
+test("Lab 4 omits the optional missing-resource exercise and retains connection verification", () => {
+  const lab = html.split('<section id="lab4">')[1]?.split("</section>")[0];
+  assert.ok(lab);
+  assert.ok(!/4-3\.|누락\/접근 실패를 의도적으로 시험|존재하지 않는 테스트 dashboard|잘못된 UID|실패도 결과물/.test(lab));
+  assert.ok(lab.includes("4-1. 연결과 도구 선택을 따로 확인"));
+  assert.ok(lab.includes("4-2. Azure Managed Grafana 만들기"));
+  assert.ok(lab.includes('id="output-lab4"'));
+  assert.ok(lab.includes("실제 data source 조회 결과와 일치"));
+  assert.ok(lab.includes('data-check="lab4">커넥터 연결 상태와 실제 데이터 조회를 확인했다.'));
+});
+
 test("global tool policies and Custom Agent overrides retain their distinct navigation", () => {
   const policies = html.split("<h3>9-2.")[1]?.split("<h3>9-3.")[0];
   assert.ok(policies?.includes('<span class="path">Agent → Settings → Permissions</span>'));
