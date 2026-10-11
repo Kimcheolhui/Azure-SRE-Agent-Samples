@@ -850,17 +850,11 @@ kubectl -n payments port-forward service/payment-api 8080:8080</code></pre>
 <section id="lab11">
 <h2>Lab 11. IDE/MCP, Playground, Session Insights, 감사</h2><p class="meta">40~60분 · 사용자 로그인과 Agent 권한 필요</p>
 <h3>11-1. VS Code에서 Azure MCP 경유로 Agent 사용</h3>
-<ol class="steps"><li>VS Code에서 샘플 저장소를 엽니다. 같은 테넌트/구독으로 <code>az login</code>합니다. Agent 리소스 scope의 <strong>Reader(control-plane) + SRE Agent Administrator(data-plane)</strong> 권한을 확인합니다.</li><li><span class="path">VS Code → Extensions → 검색 “Azure MCP Server” → Microsoft 게시자 확장 Install</span>로그인 안내를 완료합니다. 공식 VS Code 경로는 확장이 MCP를 <strong>자동 등록</strong>하는 방식입니다. SRE Agent 문서에 없는 수동 config를 필수 설정이라고 취급하지 않습니다.</li><li>Copilot Chat tool picker에서 <code>sreagent_agents_list</code>, <code>sreagent_threads_create</code> 등 <code>sreagent_</code> 기능을 확인합니다. “구독 &lt;SUBSCRIPTION_ID&gt;의 SRE agents를 나열해”로 discovery를 시험합니다. Resource Graph가 endpoint를 찾아 주므로 URL을 임의로 추측해 넣지 않습니다.</li><li>Copilot CLI도 사용할 경우에만 <code>/mcp add</code> 또는 기존 <code>~/.copilot/mcp.json</code>에 다음 server를 추가합니다. 기존 항목을 덮어쓰지 않습니다.<pre><code>{
-  "mcpServers": {
-    "azure": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@azure/mcp@latest", "server", "start"]
-    }
-  }
-}</code></pre></li><li>Copilot Chat에서 다음을 입력하고 실제 <strong>thread ID/URL</strong>을 SRE Agent에서 엽니다.
+<ol class="steps"><li>VS Code에서 샘플 저장소를 엽니다. 같은 테넌트/구독으로 <code>az login</code>합니다. Agent를 호출할 수 있는 서버 환경에서는 Agent 리소스 scope의 <strong>Reader(control-plane) + SRE Agent Administrator(data-plane)</strong> 권한이 필요합니다.</li><li><span class="path">VS Code → Extensions → 검색 “Azure MCP Server” → Microsoft 게시자 확장</span>설치된 확장의 버전을 확인합니다. 확장은 MCP 서버를 자동 등록하지만 <strong>설치만으로 SRE Agent 도구가 제공된다고 가정하지 않습니다.</strong> 실제 서버에 포함된 기능을 먼저 확인합니다.</li><li>Copilot Chat의 도구 목록에서 Azure MCP 서버의 <strong>SRE Agent 기능</strong>이 제공되는지 확인합니다. <code>sreagent_agents_list</code> 같은 이름은 문서의 개별 도구 식별자이며, 서버가 namespace 단위로 도구를 묶으면 목록에 그 이름이 그대로 보이지 않을 수 있습니다. 그러나 서버 자체에 SRE Agent namespace가 없다면 표시 방식만 바꿔도 호출할 수 없습니다.
+<p>실제 확인한 <strong>Azure MCP Server 확장 2.0.46 / 번들 서버 2.0.5</strong>에서는 <code>sreagent</code> 도구 목록이 비어 있었습니다. 이런 환경에서는 설치 오류나 Azure RBAC 부족으로 단정하지 않고 <strong>IDE에서 SRE Agent 호출 미지원</strong>으로 구분해 11-2로 진행합니다. 아래 요청은 SRE Agent 호출 기능이 실제 제공되는 환경에서만 시험합니다.</p>
+</li><li>지원되는 환경의 Copilot Chat에서 다음을 입력하고 실제 <strong>thread ID/URL</strong>을 SRE Agent에서 엽니다.
 <pre class="prompt"><code>sre-payments-kch01x7에게 "카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘."를 전달해 줘.</code></pre>
-<p>이 요청은 현재 상태에 실제 카드 지연이 있을 때 사용합니다. CLI 도구 호출 성공만으로 SRE Agent 조사가 완료된 것은 아닙니다.</p></li><li>connector/Skill/task 관리도 가능하므로 전체 tool 자동 승인과 <strong>investigate_yolo</strong>를 쓰지 않습니다. MCP trust/approval, Agent mode/policy, Azure RBAC는 서로 다른 계층입니다.</li></ol>
+<p>이 요청은 현재 상태에 실제 카드 지연이 있을 때 사용합니다. <strong>Azure MCP 직접 조회와 SRE Agent 호출은 다른 기능</strong>입니다. Copilot이 AKS/Monitor 도구로 직접 조사한 답변만 있고 SRE Agent thread가 없다면 이 실습의 Agent 호출 성공이 아닙니다.</p></li><li>지원되지 않는 도구 이름이나 endpoint를 임의로 추가하지 않습니다. 서버 업데이트도 해당 릴리스에 SRE Agent 기능이 포함됐는지 확인한 뒤 진행합니다. <strong>investigate_yolo</strong> 같은 자동 승인 옵션은 사용하지 않습니다.</li></ol>
 <p>Playground는 <strong>Builder → Agent Canvas → Test playground</strong> view에서 열며 Form/YAML 변경은 <strong>Apply</strong> 후 새 test thread에 적용합니다. 평가 결과는 구성 변경 뒤 outdated, 추가 chat 뒤 stale일 수 있으므로 재실행합니다. Refine with AI와 View AI suggestions를 구분하고 자동 수정 후 동일 케이스를 다시 시험합니다.</p>
 <h3>11-2. Test playground와 AI 평가</h3>
 <ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → payment-specialist → Test playground</span>각 상태는 Lab 2에서 생성하고, 각 케이스 뒤 healthy로 복구합니다. 질문에는 시나리오 이름이나 원인을 전달하지 않습니다.

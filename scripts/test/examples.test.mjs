@@ -413,6 +413,19 @@ test("Custom Agent setup uses the visible form without unverified handoff fields
     "Do not require handoff controls that have not been verified in the current UI");
 });
 
+test("IDE integration checks server support before requiring SRE Agent-specific tools", () => {
+  const ide = html.split("<h3>11-1.")[1]?.split("<h3>11-2.")[0];
+  assert.ok(ide);
+  assert.ok(ide.includes("설치만으로 SRE Agent 도구가 제공된다고 가정하지 않습니다"));
+  assert.ok(ide.includes("namespace"));
+  assert.ok(ide.includes("11-2로 진행"));
+  assert.ok(ide.includes("Azure MCP 직접 조회와 SRE Agent 호출은 다른 기능"));
+  assert.ok(!ide.includes('tool picker에서 <code>sreagent_agents_list</code>'),
+    "A docs tool identifier must not be treated as an always-visible picker item");
+  assert.ok(!ide.includes('args": ["-y", "@azure/mcp@latest", "server", "start"]'),
+    "Do not promise an unverified package upgrade restores SRE Agent support");
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
