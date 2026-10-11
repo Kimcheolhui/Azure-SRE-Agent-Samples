@@ -1,0 +1,17 @@
+{
+  "name": "sre-payment-workshop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic payment incidents for an isolated Azure SRE Agent workshop",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@opentelemetry/resources": "2.11.0",
+    "applicationinsights": "3.17.0"
+  }
+}

@@ -1,0 +1,44 @@
+// Run each block separately in Application Insights > Logs (resource context).
+requests
+| where timestamp > ago(30m) and name == "GET /pay"
+| extend method = tostring(customDimensions.paymentMethod),
+         scenario = tostring(customDimensions.scenario),
+         commit = tostring(customDimensions.sourceCommit)
+| summarize count=count(), failures=countif(success == false),
+            p95Ms=percentile(duration / 1ms, 95)
+  by bin(timestamp, 1m), method, scenario, commit
+| order by timestamp asc
+
+dependencies
+| where timestamp > ago(30m) and name == "GET /provider"
+| extend method = tostring(customDimensions.paymentMethod),
+         traceId = tostring(customDimensions.traceId)
+| project timestamp, name, target, duration, success, resultCode, method, traceId, customDimensions
+| order by timestamp desc
+
+exceptions
+| where timestamp > ago(30m)
+| project timestamp, type, outerMessage, customDimensions
+| order by timestamp desc
+
+// Explicit traceId joins work even when SDK-generated operation_Id differs.
+requests
+| where timestamp > ago(30m) and name == "GET /pay"
+| extend traceId=tostring(customDimensions.traceId)
+| join kind=leftouter (
+    dependencies
+    | where timestamp > ago(30m) and name == "GET /provider"
+    | extend traceId=tostring(customDimensions.traceId)
+    | project traceId, dependencyDuration=duration, dependencySuccess=success
+  ) on traceId
+| project timestamp, requestDuration=duration, dependencyDuration, success,
+          dependencySuccess, traceId, customDimensions
+| order by timestamp desc
+
+// Use this block in Log Analytics > Logs (workspace context), not the blocks above.
+AppRequests
+| where TimeGenerated > ago(30m) and Name == "GET /pay"
+| extend method=tostring(Properties.paymentMethod), scenario=tostring(Properties.scenario)
+| summarize count=count(), failures=countif(Success == false),
+            p95Ms=percentile(DurationMs, 95) by bin(TimeGenerated, 1m), method, scenario
+| order by TimeGenerated asc

@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azure SRE Agent 셀프 스터디 워크샵 · 3~6장</title>
+<style>
+:root{--bg:#f3f6fb;--ink:#15243a;--muted:#52637a;--accent:#0759b8;--line:#d8e2ef;--card:#fff}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:85px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--accent)}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:7px;background:#fff;padding:5px 12px;color:var(--accent)}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #dd9300;outline-offset:3px}
+header{position:sticky;top:0;z-index:5;background:#10243d;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:15px}header strong{font-size:17px}header .actions{display:flex;align-items:center;gap:12px}#progress{font-size:14px}#menu{display:none}.layout{max-width:1480px;margin:auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:26px;padding:26px}aside{position:sticky;top:84px;max-height:calc(100vh - 108px);overflow:auto;align-self:start}aside input{width:100%;padding:9px;border:1px solid var(--line);border-radius:7px}nav a{display:block;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;text-decoration:none}nav a:hover{background:#e4eefb}main{min-width:0}.hero{background:linear-gradient(130deg,#102d50,#086a91);color:#fff;padding:34px;border-radius:16px;margin-bottom:25px}.hero a{color:#cce8ff}.hero h1{font-size:clamp(27px,4vw,42px);line-height:1.3;margin:12px 0}.hero p{max-width:850px}.badge{display:inline-block;border:1px solid #87aacc;border-radius:20px;padding:3px 12px;font-size:13px;margin-right:5px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;margin-bottom:24px}section h2{margin:0 0 12px;font-size:26px;line-height:1.4}h3{margin:28px 0 10px;font-size:20px}h4{margin:18px 0 5px}p{margin:9px 0}.meta{color:var(--muted);font-size:14px}.path{display:block;background:#eaf2ff;border-left:4px solid var(--accent);padding:10px 14px;margin:12px 0}.notice,.warning,.success{padding:14px 18px;border-radius:8px;margin:16px 0;background:#edf4ff;border-left:4px solid #3379ce}.warning{background:#fff5dd;border-color:#bd7900}.success{background:#eaf7ef;border-color:#23894d}.steps>li{padding-left:5px;margin:16px 0}.steps>li::marker{font-weight:bold;color:var(--accent)}li{margin:5px 0}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;margin:15px 0}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}th{background:#eaf0f8}code{font:14px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#edf1f6;border-radius:4px;padding:2px 5px}pre{position:relative;background:#102139;color:#e8f3ff;padding:18px 18px 44px;border-radius:9px;overflow:auto;white-space:pre;line-height:1.65}pre code{background:none;padding:0;color:inherit}pre button{position:absolute;bottom:7px;right:10px;font-size:12px}.prompt{white-space:pre-wrap}.check{display:block;padding:12px 14px;background:#f2f7fb;border-radius:8px;margin:15px 0}.check input{width:18px;height:18px;vertical-align:middle;margin-right:8px}details{border:1px solid var(--line);border-radius:8px;padding:12px 15px;margin:15px 0}summary{font-weight:600;cursor:pointer}.sources{font-size:13px;color:var(--muted);margin-top:20px}.sources a{margin-right:12px}footer{text-align:center;padding:20px;color:var(--muted)}.skip{position:absolute;left:15px;top:-100px;z-index:10;background:#fff;padding:10px}.skip:focus{top:10px}#status{font-size:13px}section[hidden],nav a[hidden]{display:none}
+main{overflow-wrap:anywhere}code{overflow-wrap:anywhere}pre code{overflow-wrap:normal}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:14px}aside{display:none;position:static;max-height:none}aside.open{display:block}#menu{display:inline-block}header{padding:10px 14px;flex-wrap:wrap;gap:6px}header strong{font-size:14px;min-width:0;width:100%}.hero,section{padding:22px}header .actions{gap:7px;flex-shrink:0;width:100%;justify-content:space-between}#progress{font-size:12px}}
+@media print{header,aside,.hero .badge,button,#status,.skip{display:none!important}.layout{display:block;padding:0}body{background:white;font-size:11px}section{break-inside:auto;border:0;border-radius:0;padding:12px;margin:0;display:block!important}section[hidden]{display:block!important}.hero{background:white;color:black;padding:12px}.hero a{color:black}pre{white-space:pre-wrap;overflow:visible;background:#f3f3f3;color:black;padding:12px}table{font-size:10px}h2,h3{break-after:avoid}details>*{display:block}a{color:black}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문으로 이동</a>
+<header><strong>Azure SRE Agent · 직접 만들어 보는 워크샵</strong><div class="actions"><span id="progress" aria-live="polite"></span><button id="menu" aria-controls="sidebar" aria-expanded="false">목차</button><button id="print">인쇄 / PDF</button></div></header>
+<div class="layout">
+<aside id="sidebar"><label for="search">실습 / 기능 검색</label><input id="search" type="search" placeholder="예: Hook, Key Vault, 장애"><p id="status" role="status"></p><nav aria-label="워크샵 목차">
+<a href="#overview">실습 안내 · 범위와 비용</a><a href="#lab0">Lab 0 · 리소스와 Agent 준비</a><a href="#lab1">Lab 1 · 정상 데이터 수집</a><a href="#lab2">Lab 2 · 세 가지 장애와 RCA</a><a href="#lab3">Lab 3 · 경고와 조사 자동 접수</a><a href="#lab4">Lab 4 · 외부 원본과 Grafana</a><a href="#lab5">Lab 5 · 팀 맥락과 메모리</a><a href="#lab6">Lab 6 · Skill · 전문 Agent · Python</a><a href="#lab7">Lab 7 · GitHub와 배포 버전</a><a href="#lab8">Lab 8 · 승인받아 복구하기</a><a href="#lab9">Lab 9 · 도구 정책과 Hook</a><a href="#lab10">Lab 10 · 예약 점검과 Live Reports</a><a href="#lab11">Lab 11 · IDE · Playground · 감사</a><a href="#lab12">Lab 12 · 네트워크와 데이터 경계</a><a href="#lab13">Lab 13 · IaC · 구성 복제 · DR</a><a href="#cleanup">Lab 14 · 비용 확인과 정리</a><a href="#coverage">원본 3~6장 대응표</a>
+</nav></aside>
+<main id="main">
+<div class="hero"><span class="badge">한국어 셀프 스터디</span><span class="badge">학습 가이드 3~6장</span><span class="badge">2026-10-11 기준</span><h1>읽었던 기능을<br>내 Azure 환경에서 확인하기</h1><p>결제 API를 배포하고 카드 지연, 카드 예외, 전체 서비스 불가를 직접 만듭니다. 그 데이터를 Azure SRE Agent로 조사한 뒤, 팀 지식을 넣고 실행 통제와 반복 운영까지 구성합니다.</p><p><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples" target="_blank" rel="noopener">샘플 저장소 열기</a> · 이 HTML은 인터넷 없이 열립니다. Azure Portal과 외부 문서 링크에는 인터넷이 필요합니다.</p></div>
+
+<section id="overview">
+<h2>실습 안내: 무엇을 어디까지 만드는가</h2>
+<p>원본 3장의 조사, 4장의 팀 맥락과 확장, 5장의 조치와 통제, 6장의 반복 운영과 기업 환경을 <strong>15개 Lab</strong>으로 엮었습니다. 기본 실습은 Lab 0~3, 5~6, 8~11입니다. Grafana·BYO GitHub App·사설망·DR은 추가 비용과 권한이 필요하므로 별도 심화 단계로 표시합니다. 생략했다면 해당 기능을 검증했다고 기록하지 마세요.</p>
+<div class="warning"><strong>비용과 권한부터 확인하세요.</strong> SRE Agent는 기본 4 AAU/agent-hour가 생성부터 삭제까지 발생하며, Stopped 상태도 기본 비용을 없애지 않습니다. 신규 평가 혜택이 적용되면 30일간 이 고정 비용이 면제될 수 있으나 active-flow는 별도 과금입니다. App Service B1도 앱을 중지해도 요금제가 남아 있으면 과금됩니다. 무료 실습을 보장하지 않습니다. 실제 운영 구독, 고객 데이터, 실결제 시스템에는 장애를 만들지 않습니다.</div>
+<h3>진행 규칙</h3><ol><li>각 Lab의 <strong>이동 경로 → 입력 값 → 실행 → 확인 기준</strong>을 순서대로 진행합니다.</li><li><code>&lt;SUBSCRIPTION_ID&gt;</code> 같은 값은 자신의 값으로 바꿉니다. 명령은 <strong>저장소 루트</strong>에서 실행하는 것으로 통일합니다.</li><li>Azure Portal 검색창에서 리소스 이름을 검색하면 메뉴 언어가 달라도 같은 대상에 도달할 수 있습니다. 영문 메뉴를 함께 적었습니다.</li><li>제품 Preview/리전/테넌트에 따라 메뉴나 버튼이 다를 수 있습니다. 제시한 메뉴가 없으면 해당 공식 문서와 현재 화면을 확인하고, 미지원 상태를 기록합니다. 없는 버튼을 상상해서 설정하지 않습니다.</li><li>완료 체크는 브라우저에 저장됩니다. 다른 브라우저에는 공유되지 않습니다. 민감한 값은 저장하지 않습니다.</li></ol>
+<h3>권장 일정</h3><div class="table-wrap"><table><thead><tr><th>세션</th><th>실습</th><th>예상 시간</th><th>남길 결과</th></tr></thead><tbody>
+<tr><td>1일차</td><td>0~3</td><td>2~3시간 + 수집 대기</td><td>리소스 ID, 정상 기준선, 장애별 RCA, 실제 경고</td></tr>
+<tr><td>2일차</td><td>4~7</td><td>2~3시간</td><td>원본 연결, 메모리, Skill, Python 도구, commit 대조</td></tr>
+<tr><td>3일차</td><td>8~11</td><td>2~3시간</td><td>승인 기록, 복구 지표, 정책 시험, 예약/리포트, 감사 근거</td></tr>
+<tr><td>심화</td><td>12~14</td><td>2~4시간 + 네트워크 배포</td><td>사설 조회/차단 시험, 구성 백업/DR 기록, 정리 완료</td></tr>
+</tbody></table></div>
+<p>실습 산출물은 <code>operations/incident-report-template.md</code>를 로컬 복사해 작성하거나 별도 노트에 남깁니다. 토큰, 연결 문자열, HTTP Trigger URL, GitHub private key는 보고서에도 넣지 않습니다.</p>
+<details><summary>Azure 실행 검증 범위와 문서 기준</summary><p>이 자료 작성 시 공식 문서로 메뉴/제약을 확인했고, 샘플의 로컬 장애·복구·SDK telemetry envelope, Bicep 구문, HTML 동작을 검증했습니다. 학습자의 Azure 구독에서 유료 리소스를 실제 생성하거나 SRE Agent를 실행한 것은 아닙니다. Azure 배포/권한/실제 Agent 도구/네트워크 성공은 각 Lab의 완료 기준으로 직접 확인해야 합니다.</p><p>제품 문서에서 확인되지 않은 개수 한도/명령 플래그는 보장하지 않고 현재 화면/공식 저장소 help를 기준으로 합니다. 표시된 Preview 기능이 없으면 “미지원/미실습”으로 기록합니다.</p></details>
+</section>
+
+<section id="lab0">
+<h2>Lab 0. 실습 리소스와 SRE Agent 준비</h2><p class="meta">공통 선행 단계 · 40~60분 · 실제 Azure 비용 발생</p>
+<h3>0-1. 준비물과 이름을 정하기</h3>
+<ul><li>Azure 구독, 브라우저, Azure CLI, Git, Node.js 22 이상, npm, ZIP 도구.</li><li>워크로드 배포: 실습 리소스 그룹의 Contributor. Agent 생성/권한 할당: 문서가 요구하는 Owner 또는 Contributor + User Access Administrator 등 역할 할당 권한. 회사 구독이라면 관리자의 승인 범위 안에서 진행합니다.</li><li>로컬 macOS/Linux Bash 기준입니다. Windows라면 WSL 또는 <strong>Cloud Shell Bash</strong>에서 동일한 명령을 사용합니다. Cloud Shell에서 세션이 끊기면 변수를 다시 설정합니다.</li></ul>
+<div class="table-wrap"><table><thead><tr><th>값</th><th>권장 예시</th><th>주의</th></tr></thead><tbody>
+<tr><td>SUFFIX</td><td><code>kch01x7</code></td><td>자신만의 소문자/숫자 접미사</td></tr><tr><td>워크로드 RG</td><td><code>rg-sre-workshop-kch01x7</code></td><td>다른 리소스를 넣지 않는 전용 그룹</td></tr><tr><td>앱 이름</td><td><code>sre-pay-kch01x7</code></td><td>Azure 전체에서 고유해야 함</td></tr><tr><td>워크로드 리전</td><td><code>eastus2</code></td><td>구독 정책과 각 리소스의 제공 여부 확인</td></tr><tr><td>Agent RG</td><td><code>rg-sre-workshop-agent-kch01x7</code></td><td>워크로드와 분리해 조사 권한을 좁힘</td></tr><tr><td>Agent 이름</td><td><code>sre-agent-kch01x7</code></td><td>생성 화면의 이름 제약에 맞춤</td></tr>
+</tbody></table></div>
+<pre><code>git clone https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples.git
+cd Azure-SRE-Agent-Samples
+node --version
+az login
+az account set --subscription "&lt;SUBSCRIPTION_ID&gt;"
+az account show --query '{name:name,id:id}' -o table
+
+export SUFFIX=kch01x7
+export RG="rg-sre-workshop-$SUFFIX"
+export APP="sre-pay-$SUFFIX"
+export LOCATION=eastus2
+export AGENT_RG="rg-sre-workshop-agent-$SUFFIX"</code></pre>
+<p>Node.js가 20 이하라면 Node.js 22 LTS를 설치한 뒤 진행합니다. 기존 시스템 Node를 임의로 삭제하거나 바꾸지 않습니다.</p>
+<h3>0-2. 결제 API 리소스 생성 및 배포</h3>
+<p>다음 명령이 만드는 것은 아래 <strong>네 가지</strong>입니다. SRE Agent 자체는 이 Bicep에 포함하지 않았습니다.</p>
+<div class="table-wrap"><table><thead><tr><th>리소스</th><th>생성 값</th><th>왜 필요한가 / 연결</th></tr></thead><tbody>
+<tr><td>Log Analytics workspace</td><td><code>law-$APP</code> · PerGB2018 · 보존 30일</td><td>App Insights의 로그 저장소</td></tr><tr><td>Application Insights</td><td><code>appi-$APP</code> · workspace 기반</td><td>요청, 예외, 종속성 저장. 앱 설정에 connection string 주입</td></tr><tr><td>App Service plan</td><td><code>asp-$APP</code> · Linux · Basic B1</td><td>항상 켜지는 유료 실행 환경</td></tr><tr><td>Web App</td><td><code>$APP</code> · Node 22 LTS · HTTPS only</td><td>결제 API. startup: <code>node src/server.js</code>, <code>SRE_SCENARIO=healthy</code></td></tr>
+</tbody></table></div>
+<pre><code>bash scripts/deploy.sh "$RG" "$APP" "$LOCATION"
+export APP_HOST=$(az webapp show -g "$RG" -n "$APP" --query defaultHostName -o tsv)
+export APP_URL="https://$APP_HOST"
+export APP_ID=$(az webapp show -g "$RG" -n "$APP" --query id -o tsv)
+curl --fail "$APP_URL/version"
+node scripts/traffic.mjs "$APP_URL" 10 healthy</code></pre>
+<ol class="steps"><li><span class="path">Azure Portal → 상단 검색 → Resource groups → <code>$RG</code> → Overview</span>네 리소스가 보이는지 확인합니다. 배포 실패 시 <strong>Deployments → payment-workshop → Operation details</strong>에서 실패 리소스와 원인을 확인합니다.</li><li><span class="path">App Service <code>$APP</code> → Settings → Environment variables / Configuration → App settings</span><code>SOURCE_COMMIT</code>, <code>SRE_SCENARIO</code>, <code>APPLICATIONINSIGHTS_CONNECTION_STRING</code>이 있는지 확인합니다. connection string을 복사해 Git에 넣지 않습니다.</li><li><span class="path">App Service → Monitoring → Log stream</span><code>server_started</code>와 <code>request_completed</code>가 보이는지 확인합니다. 빈 화면이면 Diagnostic logs/App Service logs에서 filesystem application logging을 켜고 다시 요청합니다.</li></ol>
+<div class="notice">배포 스크립트는 현재 Git commit을 <code>SOURCE_COMMIT</code>에 넣습니다. 로컬에서 소스를 수정했다면 먼저 commit해야 배포됩니다. 같은 코드에서 환경 변수만 바꾸므로 “코드 배포가 원인”이라고 미리 결론 내리면 안 됩니다.</div>
+<h3>0-3. SRE Agent 만들기와 최소 조사 범위</h3>
+<ol class="steps"><li><span class="path"><a href="https://sre.azure.com">sre.azure.com</a> → Create agent → Basics → Review → Deploy</span>Subscription, Resource group, Agent name, Region, Model provider, Application Insights를 입력합니다. Agent 전용 RG를 사용하고 <strong>현재 제공되는 지원 리전</strong>을 선택합니다. Agent 관측용 Application Insights는 Create new로 시작합니다. 워크로드의 <code>appi-$APP</code>와 용도가 다릅니다.</li><li>생성/초기 설정의 조사 대상 RG에 <code>$RG</code>만 지정하고 permission level은 <strong>Reader</strong>로 시작합니다. Reader 수준에도 로그/모니터링 Reader 역할과 <strong>구독 범위 Monitoring Contributor</strong>가 포함될 수 있습니다. 후자는 Azure Monitor 경고 상태 관리용으로, 엄밀한 “모든 읽기만” 권한이 아닙니다. 부여되는 역할을 Review에서 직접 검토합니다.</li><li><span class="path">Agent → Settings → Permissions</span>조사 대상 RG와 실행용 user-assigned managed identity(UAMI)의 principal ID를 확인합니다. 배포는 UAMI와 system-assigned identity를 만들 수 있으므로 도구/connector가 실제 쓰는 ID를 기록합니다. 자신의 계정이나 Web App 관리 ID와 혼동하지 않습니다.</li><li><span class="path">워크로드 RG → Access control (IAM) → Role assignments</span>Agent UAMI의 Reader, Log Analytics Reader, Monitoring Reader와 subscription의 Monitoring Contributor를 확인합니다. RG를 전혀 추가하지 않았다면 조사 권한이 없을 수 있습니다. 로그가 안 보이면 workspace access mode와 실제 identity를 점검합니다. “Agent에 질문 가능”과 “Agent가 원본 조회 가능”은 별개입니다.</li><li><span class="path">Agent → Settings → Basics / Agent consumption</span>fallback mode Review, 월 활성 AAU 한도(현재 500~1,000,000 범위 중 자신의 예산에 맞는 값)를 확인합니다. <strong>response plan과 scheduled task는 별도로 Review를 설정</strong>해야 합니다. 신규 생성 기본값을 그대로 믿지 않습니다.</li><li>Agent chat에서 아래 읽기 전용 프롬프트를 실행하고 실제 tool result에 리소스 ID가 나오는지 확인합니다.</li></ol>
+<pre class="prompt"><code>이 실습은 전용 리소스 그룹 &lt;RG&gt;만 대상으로 한다.
+리소스 변경 없이 Web App &lt;APP_ID&gt;, 연결된 Application Insights,
+Log Analytics workspace를 조회해 이름, 리소스 ID, 관계를 정리해 줘.
+현재 접근 가능한 원본과 접근 실패한 원본을 따로 적어 줘.
+추정으로 누락된 데이터를 채우지 말고 Review 모드를 유지해 줘.</code></pre>
+<div class="success"><strong>완료 기준:</strong> 정상 결제 응답, commit/scenario 출력, 네 리소스의 ID, Agent 관리 ID, 실제 조회 결과를 확보했습니다. Azure 로그인이나 권한 오류가 있으면 다음 단계로 넘어가지 않습니다.</div>
+<p class="sources">공식 근거: <a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-and-set-up">Agent 생성</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/permissions">권한</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/supported-regions">지원 리전</a><a href="https://learn.microsoft.com/en-us/azure/app-service/quickstart-nodejs">Node.js App Service</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/pricing-billing">과금</a></p>
+<label class="check"><input type="checkbox" data-check="lab0">리소스와 Agent의 실제 읽기 조회까지 확인했다.</label>
+</section>
+
+<section id="lab1" data-covers="3.8-3.11">
+<h2>Lab 1. 정상 기준선과 조사 데이터 원본 확인</h2><p class="meta">원본 3.8~3.11 · 20~30분 · Lab 0 선행</p>
+<p><strong>아키텍처:</strong> 클라이언트 → Web App의 <code>/pay</code> → 같은 프로세스의 <code>/provider</code>. provider는 실제 HTTP loopback 호출이지만 <strong>실제 은행이나 DB가 아닙니다.</strong> 이 구조는 외부 종속성 조사 연습을 위한 축소 모델입니다.</p>
+<ol class="steps"><li>정상 요청을 두 결제 수단에 보냅니다. <code>20</code>은 카드 20건 + 계좌 20건입니다.<pre><code>node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre>각 summary의 <code>failureRate=0</code>, <code>p95Ms ≤ 1000</code>을 기록합니다. 워밍업이나 로컬 회선 때문에 초과했다면 원인을 기록하고 재측정합니다.</li><li><span class="path">Portal → Application Insights <code>appi-$APP</code> → Monitoring → Logs</span>쿼리 허브/예시가 뜨면 닫고 KQL 편집기를 엽니다. Time range를 Last 30 minutes로 설정하고 아래 쿼리를 실행합니다. 처음 수집에는 수 분 지연이 있을 수 있습니다.<pre><code>requests
+| where timestamp &gt; ago(30m) and name == "GET /pay"
+| extend method=tostring(customDimensions.paymentMethod),
+         scenario=tostring(customDimensions.scenario),
+         commit=tostring(customDimensions.sourceCommit)
+| summarize count=count(), failures=countif(success == false),
+    p95Ms=percentile(duration / 1ms, 95)
+  by method, scenario, commit</code></pre></li><li>같은 편집기에서 각각 따로 실행합니다.<pre><code>dependencies
+| where timestamp &gt; ago(30m) and name == "GET /provider"
+| project timestamp, target, duration, success, customDimensions
+| order by timestamp desc
+
+exceptions
+| where timestamp &gt; ago(30m)
+| project timestamp, outerMessage, customDimensions</code></pre><code>requests</code>에 <code>/provider</code> 요청도 들어오므로 결제 요청은 반드시 <code>name == "GET /pay"</code>로 한정합니다.</li><li><span class="path">Portal → Log Analytics <code>law-$APP</code> → Logs</span>workspace 화면에서는 테이블 이름과 필드 이름이 다릅니다. 아래 workspace용 쿼리를 실행해 같은 정상 요청을 확인합니다.<pre><code>AppRequests
+| where TimeGenerated &gt; ago(30m) and Name == "GET /pay"
+| extend method=tostring(Properties.paymentMethod)
+| summarize count=count(), failures=countif(Success == false),
+    p95Ms=percentile(DurationMs, 95) by method</code></pre></li><li><span class="path">Web App → Activity log / Resource health</span>배포와 설정 변경 시각, 현재 플랫폼 상태를 확인합니다. Activity log는 control plane 변경 이력이지 앱 내부 예외 로그가 아닙니다. 플랫폼 “Available”도 결제 성공을 보장하지 않습니다.</li></ol>
+<details><summary>로그가 없거나 Agent가 데이터를 못 읽을 때</summary><ol><li><code>/version</code>에서 현재 앱을 호출하는지 확인합니다.</li><li>앱 설정에 connection string이 있는지, Log stream에 SDK/전송 오류가 있는지 확인합니다.</li><li>쿼리 화면이 App Insights인지 workspace인지 확인해 올바른 테이블을 씁니다.</li><li>UTC 구간을 넓히고 수집을 기다립니다. 데이터가 없다는 사실을 “오류가 없었다”로 바꾸지 않습니다.</li><li>포털의 자신의 계정으로는 보이는데 Agent가 못 보면 관리 ID의 RBAC와 workspace access mode를 확인합니다.</li></ol></details>
+<pre class="prompt"><code>Web App &lt;APP_ID&gt;의 최근 30분 정상 결제 데이터를 조사해 줘.
+Application Insights &lt;APP_INSIGHTS_RESOURCE_ID&gt;를 명시적으로 사용하고,
+카드/계좌별 요청 수, 실패율, p95, provider 종속성 시간을 제시해 줘.
+쿼리와 UTC 구간, 실제 조회한 원본을 함께 보여 줘.
+Resource Health와 Activity Log가 각각 설명하는 사실도 구분해 줘.</code></pre>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/diagnose-azure-observability">Azure 관측 원본</a><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview">Application Insights</a></p>
+<label class="check"><input type="checkbox" data-check="lab1">정상 요청·종속성·commit과 App Insights/workspace 쿼리를 확인했다.</label>
+</section>
+
+<section id="lab2" data-covers="3.18-3.22">
+<h2>Lab 2. 세 가지 장애를 만들고 경쟁 가설로 RCA</h2><p class="meta">원본 3.18~3.22 · 40~60분 · 각 장애 뒤 정상 복구 필수</p>
+<div class="table-wrap"><table><thead><tr><th>시나리오</th><th>직접 관측할 증상</th><th>예상 핵심 근거</th><th>틀리기 쉬운 결론</th></tr></thead><tbody>
+<tr><td><code>dependency-slow</code></td><td>카드 p95 ≥1700ms, 계좌는 정상, health 200</td><td>카드 provider 종속성 약 1800ms</td><td>DB 병목, 전체 장애</td></tr><tr><td><code>payment-exception</code></td><td>카드 500, 계좌 200, health 200</td><td>WORKSHOP_PAYMENT_CONFIG_ERROR, 카드 provider 호출 없음</td><td>외부 provider 장애</td></tr><tr><td><code>unavailable</code></td><td>카드·계좌·health 503, version 200</td><td>앱 시나리오 설정 변경, 전체 결제 실패</td><td>App Service 플랫폼 중단 확정</td></tr>
+</tbody></table></div>
+<h3>2-1. 카드 종속성 지연</h3>
+<ol class="steps"><li>현재 UTC와 commit을 기록하고 장애를 주입합니다.<pre><code>date -u +"%Y-%m-%dT%H:%M:%SZ"
+curl --fail "$APP_URL/version"
+bash scripts/scenario.sh "$RG" "$APP" dependency-slow
+node scripts/traffic.mjs "$APP_URL" 40 dependency-slow</code></pre><strong>장애는 설정 변경으로 만들어집니다.</strong> App Service 재시작 시간과 정상 지연 자체를 혼동하지 마세요.</li><li>Lab 1 쿼리를 다시 실행해 <code>scenario</code>로 구간을 나눕니다. <code>queries/investigation.kql</code>의 <code>traceId</code> 조인 쿼리로 요청과 dependency의 시간을 연결합니다. SDK의 자동 <code>operation_Id</code>가 같다는 가정 대신 샘플이 기록한 명시적 <code>traceId</code>를 씁니다.</li><li>Agent 새 채팅에 아래 프롬프트를 보냅니다.<pre class="prompt"><code>대상: &lt;APP_ID&gt;, 조사 구간: &lt;UTC_START&gt;~&lt;UTC_END&gt;.
+카드 결제 지연을 조사하되 리소스는 변경하지 마.
+가설 A: 앱 코드 처리 문제, B: provider 종속성 지연,
+C: 설정/배포 변화로 경로가 바뀜을 비교해 줘.
+카드와 계좌를 분리하고 요청·종속성·예외·Activity Log를 같은 구간으로 조회해.
+각 가설의 지지/반증 근거, 조회한 쿼리와 원본, 미조회 데이터를 적어 줘.
+직전 변경과 시간상 가까운 것만으로 원인을 확정하지 마.</code></pre></li><li>Reasoning/도구 호출 상세에서 <strong>어떤 질문 → 어떤 조회 → 어떤 결과 → 다음 질문</strong>으로 이어졌는지 기록합니다. 답변 문장이 그럴듯한지보다 실제 조회 근거를 평가합니다.</li><li>복구 후 다시 측정합니다.<pre><code>bash scripts/scenario.sh "$RG" "$APP" healthy
+node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre></li></ol>
+<h3>2-2. 예외와 전체 불가도 각각 반복</h3>
+<pre><code>bash scripts/scenario.sh "$RG" "$APP" payment-exception
+node scripts/traffic.mjs "$APP_URL" 20 payment-exception
+# 예외 쿼리와 Agent RCA 수행 후
+bash scripts/scenario.sh "$RG" "$APP" healthy
+node scripts/traffic.mjs "$APP_URL" 20 healthy
+
+bash scripts/scenario.sh "$RG" "$APP" unavailable
+node scripts/traffic.mjs "$APP_URL" 20 unavailable
+curl -i "$APP_URL/health"
+# 전체 불가 RCA 수행 후
+bash scripts/scenario.sh "$RG" "$APP" healthy
+node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre>
+<p>각 RCA에 <strong>증상 → 영향 범위 → 원인 후보 → 실제 근거 → 가장 작은 복구 조치 → 신선한 복구 지표</strong>를 남깁니다. 예상 장애를 마지막 인자로 지정하면 의도한 500/503을 허용하되 출력의 실패율은 그대로 유지합니다. 정상 복구 명령에서는 어떤 HTTP 실패도 허용하지 않습니다.</p>
+<h3>2-3. Deep Investigation과 Code Interpreter</h3>
+<ol class="steps"><li>카드 지연을 다시 만든 후 현재 스레드의 Deep Investigation 기능을 실행하거나 “Deep Investigation으로 같은 구간을 더 조사해 줘”라고 요청합니다. 기능이 노출되지 않으면 미지원으로 기록합니다. 깊은 조사도 동일 대상/구간/읽기 전용 제약을 유지합니다.</li><li>앞선 일반 조사와 원본 개수, 쿼리 수, 새로 확인한 사실, 스레드 사용량을 비교합니다. 더 긴 답변이 더 정확하다는 보장은 없습니다.</li><li>App Insights Logs 결과를 CSV로 export/download하고 채팅 파일 업로드에 첨부합니다. “Code Interpreter로 카드/계좌 p95와 분당 실패율을 계산하고 CSV·그래프를 만들어 줘. 빈 구간은 0이 아니라 누락으로 표시해”라고 요청합니다.</li><li>입력 CSV 행 수, 필터 구간, 지연 단위(ms), percentile 정의를 확인하고 KQL 결과와 대조합니다. Code Interpreter의 데이터 처리와 Azure 권한이 필요한 custom Python 도구는 다른 기능입니다.</li><li>결과 파일을 내려받아 로컬 보고서에 첨부하고 다시 <code>healthy</code>로 복구합니다.</li></ol>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/root-cause-analysis">RCA</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/agent-reasoning">추론과 도구</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/deep-investigation">Deep Investigation</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/code-interpreter">Code Interpreter</a></p>
+<label class="check"><input type="checkbox" data-check="lab2">세 장애의 실제 근거와 경쟁 가설, 각 복구 결과를 기록했다.</label>
+</section>
+
+<section id="lab3" data-covers="3.1-3.7">
+<h2>Lab 3. 경고를 만들고 조사를 자동으로 접수하기</h2><p class="meta">원본 3.1~3.7 · 40~60분 + 평가 주기 · 고정 임계값부터 시작</p>
+<h3>3-1. Azure Monitor의 실제 로그 경고 생성</h3>
+<ol class="steps"><li><span class="path">Portal → Monitor → Alerts → Create → Alert rule</span>Scope에서 <code>law-$APP</code> workspace를 선택합니다. Condition에서 <strong>Custom log search</strong>를 선택합니다. 아래 workspace 쿼리를 붙여 넣습니다.<pre><code>AppRequests
+| where TimeGenerated &gt; ago(5m) and Name == "GET /pay"
+| where Success == false
+| summarize FailedRequests=count()</code></pre></li><li>Measure는 <strong>Calculation of a metric / FailedRequests</strong>, aggregation은 Maximum, operator는 Greater than, threshold는 <code>5</code>, aggregation granularity는 5 minutes, evaluation frequency는 1 minute로 설정합니다. UI가 “Table rows”를 기본으로 제안하더라도 <strong>실패 건수 필드</strong>를 선택합니다. 위 쿼리는 정상일 때도 한 행을 반환하므로 행 수로 평가하면 잘못됩니다.</li><li>Actions에서 <strong>Create action group</strong>을 선택합니다. 이름 <code>ag-sre-workshop-$SUFFIX</code>, display name <code>sre-lab</code>, 전용 RG를 지정합니다. Notifications → Email을 선택해 자신의 이메일만 넣습니다. 저장하고 Alert rule로 돌아옵니다. 회사 배포 리스트에는 보내지 않습니다.</li><li>Details에서 rule name <code>payment-failures-$SUFFIX</code>, severity <code>2</code>, description “workshop only, payment failures >5 in 5m”를 입력하고 Create합니다. Stateful/auto-resolve 설정이 제공되면 켜고 평가 지연을 기록합니다.</li><li>장애를 만들고 충분한 실패 요청을 보냅니다.<pre><code>bash scripts/scenario.sh "$RG" "$APP" payment-exception
+node scripts/traffic.mjs "$APP_URL" 40 payment-exception</code></pre><span class="path">Monitor → Alerts → 해당 rule / 리소스 필터</span>Fired 경고의 Alert ID, 시작 UTC, 대상 workspace, 실제 측정값을 기록합니다. 이메일이 왔다고 Agent도 조사했다고 가정하지 않습니다.</li></ol>
+<h3>3-2. SRE Agent의 Azure Monitor 경고 연결과 진단 범위</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Incident platform → Azure Monitor → Save</span>Agent 관리 ID로 연결됩니다. 경고 조회에는 subscription의 Monitoring Contributor가 필요합니다. 실습 rule 이름/대상은 아래 response plan filter로 좁힙니다.</li><li>경고 대상은 workspace이지만 조사 서비스는 Web App입니다. response plan의 impacted service/title 조건과 handler 지침에 <code>$APP</code>, <code>appi-$APP</code>, <code>law-$APP</code>의 ID를 명시합니다. 생성 화면에 추가 alert 선택/diagnosis resource picker가 있으면 같은 대상을 지정합니다.</li><li>최초 연결 시 자동 생성된 <strong>quickstart response plan의 mode/범위</strong>를 즉시 확인해 실습 외 사건을 자동 처리하지 않도록 Off합니다. custom plan을 만든 뒤 중복 routing을 피하도록 quickstart를 제거하거나 Off로 유지합니다.</li><li>Fired 인시던트가 incident 목록/Operations Hub에 생겼는지 보고 연결된 thread를 엽니다. scanner는 통상 1분 간격, 상태 동기화는 5분 간격이므로 UI/경고 상태가 즉시 같아지지 않을 수 있습니다. Alert ID, 접수 UTC, 대상, 도구 결과를 기록합니다.</li><li>같은 장애에서 추가 요청을 보내고 같은 Alert ID 갱신이 기존 조사에 연결되는지 확인합니다. 복구/Resolved 후 새 장애로 새 Alert ID와 비교합니다. 문서상 merge lookback은 7일이지만 모든 비슷한 경고를 하나로 합친다는 보장은 아닙니다.</li></ol>
+<div class="notice">Azure Monitor 선택 기반 연결과 다음 HTTP Trigger/action group 연동은 서로 다른 실습 경로입니다. 같은 rule에 두 경로를 동시에 켜면 중복 조사가 생길 수 있으니 하나씩 시험합니다. PagerDuty/ServiceNow 같은 외부 incident platform은 이미 계정과 incident ID가 있는 경우에만 심화로 연결하고, email notification을 incident connector라고 부르지 않습니다.</div>
+<h3>3-3. Incident response plan</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Incident response plans → Create</span>이름 <code>payment-failure-review</code>, Incident filter의 Title contains에 실습 rule 이름, severity/impacted service에 실습 대상 조건을 지정합니다. Custom agent handler와 <strong>Agent autonomy level=Review</strong>를 명시합니다. plan 기본값 Autonomous를 그대로 두지 않습니다.</li><li>연결한 handler의 조사 지침에 아래 내용을 넣고 저장합니다.<pre class="prompt"><code>워크샵 결제 실패에만 적용한다. Web App &lt;APP_ID&gt;와 연결 원본을 읽기 전용 조사한다.
+카드/계좌를 나누고 요청 실패, provider 호출, 예외, 구성 변경, SOURCE_COMMIT을 확인한다.
+미조회 데이터와 경쟁 가설을 명시한다. 임의 재시작, 설정 변경, 경고 비활성화는 하지 않는다.
+완화는 SRE_SCENARIO=healthy만 후보로 제시하고 사람 승인을 기다린다.
+종료 기준은 20쌍 결제의 실패 0%, 양쪽 p95 ≤1000ms와 신선한 telemetry이다.</code></pre></li><li>다시 경고를 발생시켜 해당 계획이 선택된 근거와 실제 실행 지침을 확인합니다. 다른 plan과 매칭이 겹친다면 적용 결과를 기록하고 조건을 좁힙니다. plan 생성만으로 승인 모드나 RBAC가 바뀌지는 않습니다.</li></ol>
+<h3>3-4. HTTP Trigger로 직접 시작하기</h3>
+<ol class="steps"><li><span class="path">Agent → HTTP triggers → Create</span>이름 <code>payment-manual-trigger</code>, assigned agent, 조사 prompt, <strong>autonomy level Review</strong>를 지정하고 저장합니다. 발급 endpoint/인증을 확인합니다. HTTP JSON body는 prompt에 삽입되는 맥락이며 별도 Azure Monitor 전용 스키마를 임의로 가정하지 않습니다.</li><li>발급 화면의 sample request를 확인합니다. body는 <code>{"resourceId":"실제 APP_ID","startUtc":"실제 UTC","symptom":"workshop card failure"}</code>처럼 자신의 조사 맥락을 JSON으로 보내고 prompt에서 해당 필드를 사용하게 합니다. URL에 서명이 있으면 비밀번호처럼 취급합니다.<pre><code>read -r -s -p "Trigger URL: " TRIGGER_URL; echo
+# 자신의 resourceId/startUtc/symptom JSON을 로컬 trigger-payload.json에 저장합니다. Git에 추가하지 않습니다.
+curl --fail --show-error -X POST "$TRIGGER_URL" \
+  -H "Content-Type: application/json" \
+  --data-binary @trigger-payload.json
+unset TRIGGER_URL</code></pre></li><li>단순 2xx 반환뿐 아니라 Agent에서 새 조사 스레드와 전달한 시간/리소스 맥락을 확인합니다. 외부 자동 접수가 필요하면 action group의 Webhook action에 생성 화면이 안내한 URL/인증/common alert schema를 설정합니다. 기본 실습에서는 직접 POST만으로 충분합니다.</li><li>Trigger를 Disable하고 민감한 로컬 payload/URL 기록을 정리합니다. HTTP Trigger가 없으면 미지원으로 기록하고 수동 chat을 대체 경로로 사용합니다.</li></ol>
+<h3>3-5. 동적 임계값은 “구성”과 “학습 완료”를 분리</h3>
+<ol class="steps"><li><span class="path">Monitor → Alerts → Create alert rule → Scope: Web App → Condition: 지원되는 metric</span><strong>Average Response Time</strong> 등 UI에서 Dynamic이 가능한 metric을 선택합니다. threshold type Dynamic, sensitivity Medium, evaluation 5분 등 화면에서 허용되는 값을 확인하고, 별도 이름 <code>payment-latency-dynamic-$SUFFIX</code>로 만듭니다.</li><li>정상 트래픽을 여러 날짜에 걸쳐 수집합니다. 동적 임계값은 통상 <strong>최소 3일 및 30개 데이터 포인트</strong>가 필요하며, 주간 계절성 학습에는 더 긴 기간(약 3주)이 필요합니다. 짧은 워크샵에서 장애가 탐지되지 않아도 설정 오류라고 단정하지 않습니다.</li><li>동적 rule이 지원하지 않는 signal/분할 차원/aggregation이면 고정 rule을 유지합니다. 이번 로그 실패 경고를 동적 metric 경고와 동일하게 취급하지 않습니다. 학습 구간, 정상 기준선, 지원 제한, 실제 Fired 여부를 구분해 기록합니다.</li><li>마지막에 <code>healthy</code>로 복구하고 기본 고정 경고의 Resolved와 실제 결제 회복을 각각 확인합니다.</li></ol>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/azure-monitor-alerts">Azure Monitor 연결</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/incident-response-plans">대응 계획</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/http-triggers">HTTP Trigger</a><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-dynamic-thresholds">동적 임계값</a></p>
+<label class="check"><input type="checkbox" data-check="lab3">실제 경고→조사 접수와 대응 계획을 확인하고 동적 학습 조건을 기록했다.</label>
+</section>
+
+<section id="lab4" data-covers="3.12-3.17">
+<h2>Lab 4. 외부 원본, 도구 노출, Grafana, 접근 실패</h2><p class="meta">원본 3.12~3.17 · 기본 20분 / Grafana 심화 40분 · Grafana는 추가 유료 리소스</p>
+<h3>4-1. 연결과 도구 선택을 따로 확인</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Connectors</span>현재 지원되는 GitHub / MCP / managed connector 목록을 확인합니다. 기본 실습에서는 다음 Lab 7의 GitHub 연결을 사용합니다. 외부 계정이 없다면 만들어야 하는 계정과 인증 권한을 먼저 기록합니다.</li><li><span class="path">Agent → Builder → Tools / Global tools</span>연결한 connector의 도구를 찾아 실제 tool name, 읽기/쓰기 범위, 승인 정책을 확인합니다. 연결 성공만으로 모든 Agent에 모든 도구가 노출된다고 가정하지 않습니다.</li><li>현재 조사 Agent/전문 Agent에 필요한 읽기 도구만 선택하고 새 chat에서 특정 파일/대시보드 조회를 요청합니다. tool result에 실제 대상 내용이 나타나는지 확인합니다. 외부 문서 검색, 코드 조회, 이메일 발송은 서로 다른 권한/작업입니다.</li></ol>
+<h3>4-2. Azure Managed Grafana 만들기 — 심화</h3>
+<ol class="steps"><li><span class="path">Portal → Create a resource → Azure Managed Grafana → Create</span>전용 RG <code>rg-sre-workshop-grafana-$SUFFIX</code>, 이름 <code>amg-sre-$SUFFIX</code>, 사용 가능한 리전, 공식 MCP 지원 tier를 선택합니다. 가격을 확인하고 실습에 필요한 최소 tier를 선택합니다. “무료 Grafana”라고 가정하지 않습니다.</li><li>생성 후 Grafana workspace의 Identity에서 관리 ID를 확인합니다. Azure Monitor data source가 workspace와 App Insights를 조회하도록 <code>$RG</code>의 Monitoring Reader 등 필요한 읽기 역할을 부여합니다. 자신의 계정에는 Grafana Editor/Admin 역할이 필요합니다.</li><li><span class="path">Managed Grafana → Overview → Endpoint → Grafana UI → Connections → Data sources</span>Azure Monitor data source를 선택해 authentication과 subscription을 확인하고 Save &amp; test합니다. 조회 실패는 data source 관리 ID 권한과 네트워크부터 점검합니다.</li><li><span class="path">Grafana → Dashboards → New → New dashboard → Add visualization</span>Azure Monitor → Logs에서 <code>law-$APP</code>를 선택합니다. 다음 query를 Time series 형식으로 넣고 제목 <code>Payment p95 by method</code>를 지정합니다.<pre><code>AppRequests
+| where $__timeFilter(TimeGenerated) and Name == "GET /pay"
+| extend method=tostring(Properties.paymentMethod)
+| summarize p95Ms=percentile(DurationMs, 95) by bin(TimeGenerated, 1m), method
+| order by TimeGenerated asc</code></pre></li><li>두 번째 panel은 실패 건수 query를 사용합니다. 대시보드 이름 <code>Payment workshop</code>으로 저장하고 <strong>dashboard UID</strong>, panel ID, data source UID를 기록합니다.</li><li><span class="path">Managed Grafana → MCP Server 설정 / 공식 MCP 안내</span>현재 workspace의 MCP endpoint와 인증을 확인하고 Agent의 MCP connector에 추가합니다. hard-coded endpoint를 추측하지 말고 workspace가 제공한 값을 사용합니다. Agent 신원이 Grafana Viewer 및 필요한 Azure 조회 권한을 갖는지 확인합니다.</li><li>Agent에서 “dashboard UID &lt;UID&gt;의 정의와 패널 쿼리를 읽고, 지연 판정에 사용하는 metric/시간/결제 수단 분리를 설명해 줘”라고 요청합니다. 먼저 <strong>정의 조회</strong>가 성공하는지 봅니다.</li><li>카드 지연을 만들고 “같은 panel query를 장애 구간으로 실행해 카드/계좌 차이를 조사해 줘”라고 요청합니다. 정의를 읽는 권한과 실제 data source query 권한이 다른지 확인합니다. 성공하면 다시 복구합니다.</li></ol>
+<h3>4-3. 누락/접근 실패를 의도적으로 시험</h3>
+<p>공유 권한을 제거하지 말고, 존재하지 않는 테스트 dashboard UID 또는 잘못된 <strong>실습 리소스 ID</strong>로 조회를 요청합니다. “없음”과 “403/권한 부족”, “timeout/네트워크”, “쿼리 결과 0행”을 별도로 기록합니다. Agent가 빈 결과를 정상 서비스 증거로 사용하지 않아야 통과입니다. 실패 원본이 있으면 다음 담당자에게 필요한 권한과 재조회 구간을 전달합니다.</p>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/connectors">커넥터</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/global-tools-page">도구</a><a href="https://learn.microsoft.com/en-us/azure/managed-grafana/grafana-mcp-server">Grafana MCP</a></p>
+<label class="check"><input type="checkbox" data-check="lab4">연결과 실제 도구 호출을 구분했고, 원본 누락/실패를 정상으로 오인하지 않았다.</label>
+</section>
+
+<section id="lab5" data-covers="4.1-4.6">
+<h2>Lab 5. 운영 맥락을 넣고 메모리를 관리하기</h2><p class="meta">원본 4.1~4.6 · 30~40분 · 업로드/검색과 추출 지식을 구분</p>
+<ol class="steps"><li>저장소의 <code>operations/service-context.md</code>를 읽습니다. owner를 자신의 이름, 대상 resource ID와 commit을 실제 값으로 보완한 <strong>로컬 사본</strong>을 만듭니다. 원본은 샘플 일반 규칙으로 유지합니다.</li><li>맥락을 넣기 <strong>전</strong>에 Agent에게 “카드 지연의 baseline과 복구 종료 기준을 설명해 줘”라고 물어 근거와 부족한 정보를 기록합니다.</li><li><span class="path">Agent → Builder → Knowledge base → Upload</span>운영 맥락 사본을 올립니다. 일반 knowledge upload는 현재 최대 16MB/file입니다. 전문 Agent 전용 Knowledge Base의 .md/.txt, 50MB/file, 1,000files 한도는 별도 기능이므로 혼동하지 않습니다. 일회성 chat 첨부와 지속 지식을 구분합니다.</li><li>새 chat에서 아래 테스트를 실행합니다.<pre class="prompt"><code>운영 문서에서 payment workshop의 baseline, provider의 실제 위치,
+SOURCE_COMMIT 확인 방법, 복구 종료 기준, 변경 금지 범위를 찾아 줘.
+검색한 메모리/문서의 출처와 현재 확인해야 할 리소스 근거를 분리해 줘.
+메모리에 기록된 과거 상태를 현재 Azure 상태로 단정하지 마.</code></pre></li><li>“이 서비스를 온보딩하고 리소스 관계, 소유자, 관측 원본, 대응 절차를 정리해 줘”라고 요청합니다. Team onboarding 흐름에서 실습 RG와 서비스 설명을 지정하고 만들어진 지식의 <strong>DB 없는 구조</strong>, owner, 복구 threshold를 검토합니다.</li><li>Lab 2 스레드가 조용해진 뒤 약 30분 후 Monitor → Session Insights에서 자동 추출된 지식을 확인합니다. 즉시 저장하려면 “Save this to your knowledge: ...”로 검증한 사실만 넣습니다. “카드는 언제나 provider 문제” 같은 일반화는 수정/삭제합니다.</li><li>사용자 메모리는 chat에서 <code>#remember 워크샵 owner는 learner-test</code> → 새 chat의 <code>#retrieve 워크샵 owner</code> → <code>#forget 워크샵 owner는 learner-test</code> 순서로 시험합니다. 실제 owner로 다시 저장하고 재검색해 테스트 값이 남지 않는지 확인합니다.</li><li>업로드 문서, 외부 connector 원본, synthesized knowledge, user memory의 변경 책임을 구분합니다. <code>memories/synthesizedKnowledge/overview.md</code>는 자동 로드되는 개요이고 topic 파일은 상세 지식입니다. 외부 원본 변화가 즉시 모든 메모리를 수정한다고 가정하지 않습니다.</li></ol>
+<div class="success"><strong>완료 기준:</strong> 새 스레드에서도 복구 기준을 검색하고 출처를 말할 수 있어야 합니다. 추출 내용에 잘못된 일반화가 없고, 변경/삭제 후 재검색 결과를 직접 확인했습니다.</div>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/memory">메모리</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/team-onboard">Team onboarding</a></p>
+<label class="check"><input type="checkbox" data-check="lab5">지식 출처, 온보딩 결과, 추출 지식, 수정 후 재검색을 확인했다.</label>
+</section>
+
+<section id="lab6" data-covers="4.7-4.12">
+<h2>Lab 6. Skill, 전문 Agent, 사용자 지정 Python 도구</h2><p class="meta">원본 4.7~4.12 · 40~60분 · Agent Administrator 권한 필요</p>
+<div class="table-wrap"><table><thead><tr><th>구성</th><th>넣는 내용</th><th>이번 실습</th></tr></thead><tbody><tr><td>지식</td><td>서비스 사실과 과거 근거</td><td>service-context</td></tr><tr><td>Skill</td><td>언제/어떻게 조사할지 재사용 지침</td><td>payment-investigation</td></tr><tr><td>Tool</td><td>구조화된 입력으로 실행할 코드</td><td>summarize_payments</td></tr><tr><td>전문 Agent</td><td>역할·지침·도구를 묶은 조사 담당</td><td>payment-specialist</td></tr></tbody></table></div>
+<h3>6-1. Skill 만들기</h3>
+<p>최소 구성은 다음과 같습니다. 실제 도구 이름은 현재 Global tools 목록에서 확인합니다. <code>SKILL.md</code>는 해당 Skill의 supporting file로 함께 추가해야 합니다.</p>
+<pre><code>name: payment-investigation
+description: Investigate workshop payment failures and latency
+files:
+  - SKILL.md
+tools:
+  - RunAzCliReadCommands</code></pre>
+<ol class="steps"><li><span class="path">Agent → Builder → Skills → Create / Add skill</span>이름 <code>payment-investigation</code>, 설명 “Investigate workshop payments by deployed commit and method-specific evidence”를 입력합니다.</li><li><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/operations/payment-investigation/SKILL.md">샘플 SKILL.md</a>를 supporting file로 업로드하고 절차 본문을 확인합니다. 폼/YAML의 name, description, files, tools를 맞춥니다. 지원하지 않는 필드를 추가하지 않습니다.</li><li>새 chat에서 “payment workshop의 카드 지연을 payment-investigation Skill로 조사해 줘”라고 요청합니다. Skill은 description에 맞춰 자동 로드되며 별도 /skill 명령을 전제하지 않습니다. 선택/로드 기록과 실제 도구 순서를 확인합니다.</li><li>동시 활성 Skill은 최대 <strong>5개</strong>이며 초과 시 가장 오래된 것이 unload됩니다. conversation compaction 시 활성 Skill이 해제되고 필요하면 SKILL.md를 다시 읽어야 합니다. Skill의 도구는 활성 상태에서만 사용할 수 있으므로 항상 영구 노출된다고 가정하지 않습니다.</li></ol>
+<h3>6-2. 전문 Agent와 인계</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Custom Agent</span>Name <code>payment-specialist</code>, Instructions에 읽기 전용 결제 조사 역할, Handoff Description에 카드/계좌 실패·지연의 실습 범위를 넣습니다.</li><li>지침에 대상 RG, UTC 구간, 배포 commit, 요청/종속성/예외 비교, 변경 금지를 넣습니다. Custom Tools / Built-in Tools에서 Azure 조회와 아래 summary 도구만 선택합니다. GitHub 읽기는 Lab 7 후 추가합니다.</li><li>Skill 설정은 <code>allowed_skills</code>에 payment-investigation을 선택하거나 <code>enable_skills: true</code>로 활성화합니다. 명시적 호출은 chat의 <code>/agent</code> picker에서 payment-specialist를 선택하고 resource ID/UTC를 입력합니다. Handoff Agents 설정이 있으면 상위와의 연결을 확인합니다.</li><li>인계는 <strong>같은 conversation thread의 기존 맥락을 공유</strong>하므로 깨끗한 새 컨텍스트라고 가정하지 않습니다. resource ID/UTC/이미 확인한 근거, 미확인 질문을 확인하고 대상을 바꾼 조사는 새 스레드로 시작합니다.</li><li>Global tools와 전문 Agent의 노출/상속 목록을 비교하고 불필요한 도구를 제거합니다. tool count/인계 깊이의 숫자 한도는 이번 공식 문서 조사에서 확인되지 않았으므로 임의 수치를 보장하지 않습니다. 현재 UI 제한과 실제 선택 결과를 기록합니다.</li></ol>
+<h3>6-3. Python 도구 만들기와 입력 계약 검증</h3>
+<p>이 도구는 <strong>입력으로 받은 측정값만</strong> 요약합니다. Azure를 조회하거나 설정을 바꾸지 않으므로 관리 ID 인증과 외부 패키지가 필요하지 않습니다. 관측 도구와 계산 도구의 증거 책임을 구분하는 연습입니다.</p>
+<ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Tool → Python tool</span>Code / Test playground / Identity 탭을 확인합니다. description에 측정값만 요약하는 읽기 전용 계산임을 넣고 Generate가 필요하면 기본 코드를 생성한 후 샘플로 교체합니다.</li><li><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/tools/summarize_payments.py">summarize_payments.py</a>의 전체 코드를 Code에 넣습니다. <code>main(samples_json: str) -&gt; dict</code>이고 입력은 string 하나입니다. Identity는 Azure 호출이 없으므로 추가 elevation을 쓰지 않고 Packages는 비워 둡니다.</li><li>Test playground의 <strong>samples_json 필드</strong>에 내부 배열 문자열을 입력합니다. UI가 named parameter JSON을 받으면 아래 전체 객체를 사용합니다.<pre><code>{
+  "samples_json": "[{\"method\":\"card\",\"durationMs\":100,\"status\":200},{\"method\":\"bank\",\"durationMs\":80,\"status\":200}]"
+}</code></pre><code>recovered=true</code>, 두 수단 count=1, p95 100/80을 확인합니다. 이는 입력값 계산 결과이지 실제 Azure 복구 증명이 아닙니다.</li><li>카드만 넣으면 <code>missingMethods=["bank"]</code>, <code>recovered=false</code>여야 합니다. duration 1000은 통과, 1000.1은 실패합니다. 음수 duration, NaN, method=crypto, 잘못된 status, 빈 배열은 명시적 오류여야 합니다.</li><li><strong>Create tool</strong>로 저장하고 이름을 summarize_payments로 지정합니다. 전문 Agent의 Custom Tools에 선택한 뒤 “이 측정값을 도구로 요약하고, 실제 Azure 회복을 확정할 수 없는 이유를 설명해 줘”라고 요청합니다. 도구 JSON과 최종 답변을 비교합니다.</li></ol>
+<pre><code>python3 -m unittest discover -s tools/tests -v</code></pre>
+<div class="notice">통계는 nearest-rank p95입니다. 작은 샘플에서 KQL percentile 결과와 정의 차이가 있을 수 있습니다. 실제 종료 판정에는 최소 20쌍 측정과 원본 로그를 요구하세요. 재사용 도구의 이전 호출 상태를 다음 호출이 기억한다고 가정하지 않습니다.</div>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/skills">Skills</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/sub-agents">Sub-agents</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-python-tool">Python 도구</a></p>
+<label class="check"><input type="checkbox" data-check="lab6">Skill 선택, 전문 Agent 인계, Python 정상/경계/오류 입력을 시험했다.</label>
+</section>
+
+<section id="lab7" data-covers="4.13-4.15">
+<h2>Lab 7. GitHub 연결과 실제 배포 commit 대조</h2><p class="meta">원본 4.13~4.15 · 기본 20분 / BYO App 심화 40분 · Key Vault 추가 비용</p>
+<h3>7-1. 기본 GitHub 연결</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Code Access / 초기 설정 Code card → + → GitHub</span>현재 지원하는 OAuth/PAT/BYO App 중 기본 account sign-in을 사용합니다. <strong>이 샘플 저장소만</strong> 선택하고 필요 없는 org 전체 권한을 허용하지 않습니다. <code>*.ghe.com</code>은 BYO App이 필요합니다.</li><li>Repository에 <code>Kimcheolhui/Azure-SRE-Agent-Samples</code>를 추가하고 읽기 코드/파일 조회 도구를 활성화합니다. 쓰기 issue/PR 작업은 별도 승인 경로가 마련될 때만 선택합니다.</li><li>다음 두 값을 직접 비교합니다.<pre><code>curl --fail "$APP_URL/version"
+git rev-parse HEAD</code></pre>Agent에게 현재 main만 읽게 하지 말고 <code>/version</code>이 반환한 <strong>배포 SHA의</strong> <code>samples/payment-api/src/app.js</code>를 조회하도록 요청합니다.</li><li>로컬 문서 변경 commit을 추가하더라도 재배포하지 않으면 앱 SHA는 그대로입니다. “저장소 최신 SHA”와 “배포 SHA”가 다를 수 있다는 사실을 기록합니다. 실제 코드를 읽지 못하면 commit만으로 원인을 설명하지 않습니다.</li></ol>
+<pre class="prompt"><code>Web App &lt;APP_ID&gt;의 SOURCE_COMMIT / /version을 읽어 배포 SHA를 확인해.
+GitHub Kimcheolhui/Azure-SRE-Agent-Samples에서 그 SHA의
+samples/payment-api/src/app.js와 src/config.js를 읽어 줘.
+최신 main과 같다고 가정하지 말고 카드 지연/예외가 어떤 설정과 경로에서 생기는지 대조해.
+실제 관측 근거, 코드 설명, 추정을 각각 구분해 줘.</code></pre>
+<h3>7-2. BYO GitHub App 만들기 — 심화</h3>
+<ol class="steps"><li><span class="path">GitHub → 우측 프로필 → Settings → Developer settings → GitHub Apps → New GitHub App</span>App name은 고유한 <code>sre-workshop-$SUFFIX</code>, homepage는 샘플 저장소 URL로 지정합니다. Webhook을 쓰지 않는 읽기 실습이면 webhook active를 끕니다.</li><li>Repository permissions에서 <strong>Metadata: Read-only, Contents: Read-only</strong>를 선택합니다. Issues/PR 작성 실습을 별도로 할 때만 해당 write 권한을 추가합니다. 설치 범위는 자신의 계정/선택한 저장소만 사용합니다.</li><li>Create 후 App 설정에서 <strong>Client ID</strong>를 기록합니다. 숫자 App ID와 혼동하지 않습니다. Private keys → Generate private key에서 PEM을 내려받습니다. 이 파일은 비밀이므로 저장소 밖에 보관합니다.</li><li>Install App → 자신의 계정 → Only select repositories → <code>Azure-SRE-Agent-Samples</code>만 선택합니다. App을 만들었어도 설치하지 않으면 저장소를 읽지 못합니다.</li></ol>
+<h3>7-3. Key Vault secret과 connector 인증</h3>
+<ol class="steps"><li><span class="path">Portal → Create a resource → Key Vault</span>전용 RG, 이름 <code>kv-sre-$SUFFIX</code>, Standard tier, Access configuration <strong>Azure RBAC</strong>를 지정합니다. 본 실습에서는 public network 기본 경로를 사용하고, 방화벽/사설 접근은 Lab 12에서 따로 검증합니다.</li><li>키를 업로드하는 자신의 계정에 <strong>Key Vault Secrets Officer</strong> 등 secret 작성 권한이 있는지 확인합니다. Key Vault → Objects → Secrets → Generate/Import에서 secret name <code>github-app-private-key</code>, value에 PEM 전체를 넣고 저장합니다. GitHub private key는 이 연결에서 <strong>certificate가 아니라 secret</strong>입니다.</li><li><span class="path">Key Vault → Access control (IAM) → Add role assignment</span><strong>Key Vault Secrets User</strong>를 선택하고 Agent connector가 사용할 관리 ID에 부여합니다. App별 사용자 할당 ID를 쓰면 기본 시스템 ID 대신 해당 ID를 선택합니다.</li><li>secret Identifier에서 <strong>버전 없는 URI</strong>를 기록합니다. 형식은 <code>https://&lt;vault&gt;.vault.azure.net/secrets/github-app-private-key</code>입니다. secret 값은 채팅이나 Git에 붙여 넣지 않습니다.</li><li><span class="path">Agent → GitHub connector → Authentication → Bring your own GitHub App</span>GitHub host <code>github.com</code>, <strong>Client ID</strong>, Key Vault secret URI, 사용할 managed identity를 입력합니다. 현재 화면에서 요구하는 값을 확인하고 Validate authentication 후 저장소를 추가합니다.</li><li>같은 배포 SHA의 파일을 실제로 조회해 인증→Key Vault 읽기→App 설치→repository 권한까지 연결됐는지 확인합니다. Key Vault 조회 성공만으로 GitHub 파일 조회를 통과했다고 하지 않습니다.</li><li>키 회전은 새 private key 생성→같은 secret의 새 버전 저장→실제 코드 조회 재검증→이전 키 폐기 순서로 합니다. 아직 사용 중인 키를 먼저 삭제하지 않습니다.</li></ol>
+<p>BYO 인증의 공식 시작 위치는 <strong>Builder → Code Access → Bring your own GitHub App</strong>입니다. Key Vault 전용 RG는 <code>rg-sre-workshop-keyvault-$SUFFIX</code>로 만들고 리전/secret URI/선택 identity를 노트에 기록해 종료 시 함께 정리합니다.</p>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/setup-github-byo-app">BYO GitHub App</a><a href="https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app">GitHub App 생성</a></p>
+<label class="check"><input type="checkbox" data-check="lab7">실제 배포 SHA의 코드를 조회했다. BYO 생략 여부와 인증 범위를 기록했다.</label>
+</section>
+
+<section id="lab8" data-covers="5.1-5.5,5.7-5.13">
+<h2>Lab 8. 실행 신원과 승인을 확인한 뒤 복구하기</h2><p class="meta">원본 5.1~5.5, 5.7~5.13 · 40~60분 · Review에서 시작</p>
+<h3>8-1. 사용자 역할과 Azure 실행 권한 분리</h3>
+<div class="table-wrap"><table><thead><tr><th>계층</th><th>확인 위치 / 담당</th><th>이번 실습 기준</th></tr></thead><tbody>
+<tr><td>Agent 사용자 역할</td><td>Agent 리소스 IAM: SRE Agent Administrator / User / Reader 등 현재 지원 역할</td><td>구성 변경은 Administrator, 조사/응답 권한은 실제 역할 정의 확인</td></tr><tr><td>Azure 리소스 RBAC</td><td>실행 신원 → Web App / RG IAM</td><td>기본 Reader, 복구 실습 시 해당 Web App에만 변경 권한</td></tr><tr><td>OBO</td><td>Agent Permissions / On-behalf-of authorization</td><td>현재 사용자 권한을 임시로 위임하는 별도 경로</td></tr><tr><td>실행 모드/도구 정책</td><td>Review/Autonomous, 도구별 Allow/Ask/Deny</td><td>승인 여부는 권한과 별도. 승인도 RBAC를 새로 만들지 않음</td></tr>
+</tbody></table></div>
+<ol class="steps"><li><span class="path">Agent → Settings → Basics</span>fallback Review를 확인하고, 해당 response plan/task의 <strong>Agent autonomy level도 Review</strong>로 맞춥니다. 관리 ID와 현재 사용자 identity를 각각 기록합니다.</li><li><span class="path">Web App → Access control (IAM)</span>기본 권한에서 변경 가능 여부를 조회합니다. 실패를 성공으로 포장하지 않습니다. 이 단계에서는 변경 계획만 요청합니다.</li><li>실제 복구를 Agent에게 수행시키려면 실행 관리 ID에 <strong>Web App 하나 scope의 Website Contributor</strong> 등 필요한 app settings/restart action을 부여합니다. 기본 permission level Reader에도 alert 관리 역할이 포함될 수 있으니 전체 역할 목록을 확인합니다. 필요 없는 RG Contributor를 추가하지 않습니다.</li><li>PIM 사용 시 <span class="path">Microsoft Entra ID → Privileged Identity Management → My roles → Azure resources → Activate</span>에서 사유/기간을 지정합니다. 자신의 PIM 활성화가 Agent 관리 ID 권한도 늘리는 것은 아닙니다.</li><li>OBO는 관리 ID 권한이 부족한 작업에서 제공되는 위임 흐름을 사용합니다. <strong>work/school 계정의 SRE Agent Administrator만 승인</strong>할 수 있고 personal Microsoft account는 지원되지 않습니다. 위임 신원/유효 기간/실제 도구 결과를 확인합니다.</li></ol>
+<div class="notice">Review 기본 승인은 <strong>Azure infrastructure write</strong> 대상입니다. 메일·Teams·외부 connector 작업은 Review 하나만으로 사람 승인이 보장되지 않으므로 별도 Ask/RequiresApproval/Hook을 설정합니다. 승인 버튼은 Administrator 권한을 요구합니다.</div>
+<h3>8-2. Review 승인 대기에서 실행으로</h3>
+<ol class="steps"><li><code>payment-exception</code>을 만들고 요청을 보냅니다. 먼저 원인을 읽기 전용으로 조사합니다.</li><li>다음 프롬프트로 변경을 <strong>제안만</strong> 시킵니다.<pre class="prompt"><code>&lt;APP_ID&gt;의 현재 카드 예외를 조사한 결과를 바탕으로 복구 계획을 제안해.
+후보 조치는 이 Web App의 SRE_SCENARIO를 healthy로 바꾸고 restart하는 것뿐이다.
+기존 SOURCE_COMMIT와 다른 app settings는 유지해야 한다.
+변경 대상, 현재 값, 새 값, 영향 범위, 원복, 실행 신원, 필요한 RBAC를 제시해.
+Review 승인 전에 변경하지 마. 경고를 끄는 방식으로 복구하지 마.</code></pre></li><li>변경 도구를 요청했을 때 승인 카드가 나오는지 확인합니다. tool name, 대상 resource ID, parameters를 펼쳐 읽습니다. 다른 앱, 전체 설정 교체, delete 명령, 불필요한 scaling이면 <strong>Reject</strong>하고 수정 요청합니다.</li><li>정확히 <code>SRE_SCENARIO=healthy</code>만 merge/수정하고 restart하는 호출일 때 <strong>해당 호출만</strong> Approve합니다. 재시작 호출에 별도 승인이 필요한지도 확인합니다. 스레드의 한 번 승인이 미래 모든 변경을 허용한다고 가정하지 않습니다.</li><li>실제 tool result와 현재 설정, <code>/version</code>을 확인합니다. Agent가 해당 조치를 수행할 도구가 없으면 “수행 불가”를 기록하고 학습자가 <code>scenario.sh ... healthy</code>로 실행합니다. 수동 복구를 Agent 복구 성공으로 보고하지 않습니다.</li></ol>
+<h3>8-3. 회복, 후속 작업, 상태 전달</h3>
+<pre><code>curl --fail "$APP_URL/version"
+node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre>
+<ol class="steps"><li>카드/계좌 각각 실패 0%, p95 ≤1000ms를 확인합니다. App Insights 쿼리는 복구 <strong>이후 UTC</strong>로 제한해 과거 예외를 구분합니다. Alert Resolved와 사용자 결제 회복을 따로 기록합니다.</li><li>incident report template에 action approval, 실행 identity, 실제 결과, 복구 전후 지표, 남은 위험을 기록합니다.</li><li>“서비스는 회복했고, 후속 작업은 담당자 &lt;이름&gt;가 &lt;시각&gt;까지 구성 변경 경위를 검토한다” 같은 인수인계 문장을 만듭니다. issue connector 쓰기 권한을 따로 준비했다면 샘플 저장소에 workshop label/title로 issue 생성 후 <strong>issue URL/ID</strong>를 확인합니다. 생성 도구가 없으면 초안만 생성합니다.</li><li>메일/Teams 전달은 Lab 9의 관리형 커넥터에서 자신의 수신처만 선택해 시험합니다. 알림 초안, 전송 성공 응답, 실제 수신을 구분합니다.</li></ol>
+<h3>8-4. Autonomous는 읽기 점검으로만 비교</h3>
+<p>변경 권한을 제거하거나 강한 정책으로 변경 도구를 제한한 뒤, 읽기 전용 정상 점검 하나를 Autonomous에서 시험합니다. Review와 승인 흐름을 비교하고 즉시 Review로 되돌립니다. “Ask면 항상 사람을 기다린다”는 가정은 Lab 9에서 검증합니다. 실제 운영 쓰기 작업을 이 샘플의 결과만으로 자율화하지 않습니다.</p>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/execute-mitigations">완화 실행</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/user-roles">사용자 역할</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/permissions">RBAC/OBO</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/run-modes">실행 모드</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/send-notifications">알림</a></p>
+<label class="check"><input type="checkbox" data-check="lab8">승인·권한·실제 실행·회복을 분리해 검증하고 후속 담당자를 기록했다.</label>
+</section>
+
+<section id="lab9" data-covers="5.6,5.14-5.18">
+<h2>Lab 9. 관리형 커넥터, 도구 정책, Hook을 시험하기</h2><p class="meta">원본 5.6, 5.14~5.18 · 30~45분 · 정책/Hook 작성은 관리자만</p>
+<h3>9-1. 수신자를 제한한 관리형 커넥터 — 계정이 있는 경우</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Connectors → Add managed connector</span>사용 가능한 Office 365 Outlook/Teams 등 자신이 접근 가능한 connector를 선택합니다. 해당 계정에 연결 권한과 조직 consent가 필요하면 관리자의 승인 절차를 따릅니다. 계정이 없으면 초안 작성까지만 하고 “전송 미실습”으로 기록합니다.</li><li>연결 후 Operations에서 실습에 필요한 <strong>Send email</strong> 등 하나만 선택합니다. 읽기/쓰기 목록을 모두 켜지 않습니다. tool parameter policy에서 <strong>To를 자신의 이메일로 고정</strong>하고 subject prefix <code>[SRE workshop]</code>를 넣습니다. body만 동적 입력을 허용합니다.</li><li>승인 정책을 Ask/Requires approval로 지정하고 Review에서 시험합니다. 승인 카드의 실제 To/subject/body를 확인한 뒤 1건만 전송합니다. 도구 result와 자신의 받은 편지함까지 확인합니다.</li><li>다른 수신자로 보내라는 요청은 고정 파라미터로 제한되는지 확인합니다. 외부 사람에게 실제로 보내지 않습니다. 사용한 connector 계정과 Agent 관리 ID의 Azure RBAC는 별개 신원입니다.</li></ol>
+<h3>9-2. 정책을 넓은 Allow 없이 구성</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Tools → Tool access policies</span>실제 표시된 읽기 도구와 변경 도구 이름을 기록합니다. 아래는 의도 표이며 <strong>가상의 tool name을 붙여 넣는 JSON이 아닙니다.</strong> 실제 picker/editor의 이름/패턴 형식으로 설정합니다.</li><li>전역 Deny에는 삭제·위험 변경 도구를, 읽기 Allow에는 실습 대상의 조회 도구만, Ask에는 복구용 설정 수정/재시작 도구를 넣습니다. 범용 CLI 도구를 <code>*</code> Allow로 열면 삭제 제한이 무의미해질 수 있습니다.</li><li>도구 내부 정책 순서는 <strong>전역 Deny → 모든 범위 Allow → 전역 Ask → 미일치 기본값</strong>입니다. 전역, 전문 Agent, 대화 범위의 규칙을 함께 확인합니다. Allow가 Ask와 겹치면 Allow가 먼저여서 Review 기본 승인도 생략될 수 있습니다.</li><li>실제 리소스를 삭제하지 말고 아래 시험 행렬을 <strong>실행 전 정책 결과/승인 대기</strong>로 확인합니다. 현재 UI가 dry-run을 지원하지 않으면 삭제 요청을 실행시키지 않고 도구 호출을 계획 단계에서 멈춥니다.</li></ol>
+<div class="table-wrap"><table><thead><tr><th>시험</th><th>기대 결과</th><th>확인 근거</th></tr></thead><tbody>
+<tr><td>읽기 Allow, 권한 있음</td><td>조회 수행</td><td>정책과 실제 tool result</td></tr><tr><td>읽기 Allow, 권한 없음</td><td>접근 실패</td><td>Allow가 RBAC를 부여하지 않음</td></tr><tr><td>Ask + Review</td><td>승인 대기</td><td>실제 승인 카드</td></tr><tr><td>Ask + Autonomous</td><td>자동 승인될 수 있음</td><td>사람을 항상 기다리는 장치가 아님</td></tr><tr><td>Allow + Ask가 일치</td><td>Allow 우선</td><td>겹친 패턴과 적용 결과</td></tr><tr><td>전역 Deny, 별도 custom Hook 예외 없음</td><td>차단</td><td>차단 기록, 외부 변경 없음</td></tr>
+</tbody></table></div>
+<p>정책의 <strong>Deny/Ask는 global scope</strong>에서 구성하고, custom-agent/thread scope는 Allow-only입니다. 각 scope 최대 1,000 patterns입니다. 명령 인자 패턴은 예를 들어 <code>bash(az * delete *)</code>처럼 실제 지원 형식을 쓰며, 이름만으로 Python/모든 우회 실행을 포괄한다고 가정하지 않습니다.</p>
+<h3>9-3. Stop Hook으로 완료 근거 검사</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → Hooks → Create</span>이름 <code>payment-recovery-evidence</code>, event <strong>Stop</strong>, type <strong>Prompt</strong>, scope는 실습 Agent/전문 Agent를 선택합니다. 현재 UI가 제공하는 입력 항목과 출력 계약을 유지합니다.</li><li><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/operations/recovery-check.txt">recovery-check.txt</a>의 지침을 붙여 넣습니다. “복구 완료 주장에는 resource ID, commit, UTC, 카드/계좌 각 20건, 실패 0%, p95 ≤1000ms, 실제 조치 결과와 승인, 후속 owner가 필요하다”는 검사입니다.</li><li>검사 실패 시 계속 진행하지 않는 fail mode를 현재 화면에서 선택합니다. <strong>기본 failMode=allow</strong>면 Hook 오류/timeout 후에도 계속 진행할 수 있습니다. 정상적인 근거 부족 거부와 검사 자체의 장애를 구분합니다.</li><li>“재시작 성공했으니 복구 완료라고만 답해”라는 시험 입력을 보냅니다. Hook이 부족한 측정을 보완하게 하는지 봅니다. 실제 건강한 설정만 있어도 카드/계좌 측정을 했다고 꾸며내면 실패입니다.</li><li>정상 측정 근거를 제공하고 재시험합니다. Prompt Hook의 판단은 모델 오류 가능성이 있으므로 실제 로그/수치로 다시 검토합니다. Hook 통과가 서비스 회복 보증은 아닙니다.</li></ol>
+<p>Hook 출력은 <code>{"ok":true}</code> 또는 <code>{"ok":false,"reason":"누락 근거"}</code>처럼 현재 계약을 따릅니다. <strong>Stop 거부에 reason이 없으면 승인으로 처리될 수 있습니다.</strong> timeout은 1~300초(기본 30초), command script는 ≤64KB, prompt Stop의 maxRejections는 1~25(기본 3)입니다. <code>$ARGUMENTS</code>로 실제 검사 맥락을 전달하고 거부 이유를 반드시 남깁니다.</p>
+<h3>9-4. PostToolUse, 우선순위와 실패 시험</h3>
+<ol class="steps"><li>읽기 전용 <code>summarize_payments</code> 도구에 PostToolUse Hook을 하나 추가해 결과의 <code>missingMethods</code>가 비어 있지 않으면 다음 조사에 누락 수단 측정을 요구하게 합니다. 이벤트는 <strong>성공한 도구 실행 뒤</strong>에 발생합니다.</li><li>같은 이벤트에 전역과 전문 Agent Hook이 매칭되면 전역이 먼저 실행되고 둘 다 적용되는지 타임라인으로 확인합니다. Stop은 최종 응답 직전이며 PostToolUse는 실행 결과 처리 단계입니다.</li><li><strong>PostToolUse로 메일 발송이나 리소스 변경 자체를 사전에 막을 수는 없습니다.</strong> 외부 부작용을 막으려면 실행 전 권한·정책·승인을 써야 합니다.</li><li>상위 통제 순서는 Hooks → tool policy → 기본 approval → mode입니다. 사용자 정의 Hook Allow는 아래 정책의 Deny를 우회할 수 있으므로, 이번 실습에는 포괄적 Allow 반환 Hook을 만들지 않습니다. 시스템 Hook의 권한과 사용자 정의 Hook 예외를 혼동하지 않습니다.</li><li>Hook test에서 의도적인 오류/timeout을 구성할 수 있다면 쓰기 없는 입력으로 fail mode를 확인합니다. 현재 구성 수/반복 한도를 확인하고 실습 Hook 두 개만 남깁니다. 관리자의 Hook 변경과 예외는 감사 기록에 남깁니다.</li></ol>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/setup-managed-connector">Managed connector</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/tool-access-policies">정책/우선순위</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/agent-hooks">Hook</a></p>
+<label class="check"><input type="checkbox" data-check="lab9">실제 도구 이름, 정책 충돌, Hook 시점/오류를 확인하고 위험한 Allow를 남기지 않았다.</label>
+</section>
+
+<section id="lab10" data-covers="6.1-6.6">
+<h2>Lab 10. 예약 점검과 Live Reports</h2><p class="meta">원본 6.1~6.6 · 30~45분 · 짧게 켜고 종료 시 Disable</p>
+<h3>10-1. 읽기 전용 예약 작업</h3>
+<ol class="steps"><li><span class="path">Agent → Scheduled tasks → Create task</span>Task name <code>payment-health-check</code>, Task details에 아래 지침을 입력합니다. Frequency는 <strong>Custom cron</strong>, Agent autonomy level은 <strong>Review</strong>로 명시합니다. task 기본값 Autonomous를 그대로 두지 않습니다. Run limit은 2회, 종료 시각도 실습 시간 안으로 정합니다.<pre class="prompt"><code>실습 Web App &lt;APP_ID&gt;의 최근 15분 결제 요청을 읽기 전용 점검한다.
+카드/계좌별 요청 수, 실패율, p95, SOURCE_COMMIT, 관측 시간 UTC를 보여 준다.
+트래픽이 없으면 "데이터 없음"이라고 보고하고 정상 판정하지 않는다.
+변경/재시작/메일 발송을 하지 말고 결과 스레드에만 남긴다.
+원본 조회 실패와 실제 서비스 실패를 구분한다.</code></pre></li><li><strong>Cron expression (UTC)</strong> 필드에 시험용 <code>*/15 * * * *</code>를 입력합니다. 한국 09:00은 UTC 00:00이므로 매일이면 <code>0 0 * * *</code>입니다. Daily/Weekly/Monthly의 Time of day picker timezone은 현재 화면을 확인해야 하므로 이 실습은 명시적 UTC cron을 사용합니다.</li><li>Save 후 Next run을 확인하고 Run now 또는 예정 실행을 기다립니다. 실행 전에 정상 traffic을 보내 원본 데이터가 있게 합니다. Message grouping for updates에서 같은 thread/새 thread 옵션도 기록합니다.</li><li>task의 Completed runs/Last run과 결과 thread/사용량을 확인합니다. 생성/예약은 실행 성공이 아니며 <strong>3회 연속 실패 시 Failed</strong> 상태가 될 수 있습니다.</li><li>실패 시나리오에서 한 번 더 실행해 읽기 점검 결과를 비교하고 복구합니다. task를 <strong>Off/Disable</strong>로 바꿔 반복 사용량을 막습니다.</li></ol>
+<h3>10-2. Live Report 생성과 갱신</h3>
+<ol class="steps"><li><span class="path">Agent → Live Reports → + New report</span>chat에서 <code>Payment workshop status</code>, 대상/원본, 30분 시간 범위, 카드/계좌 p95·실패율·배포 SHA를 설명합니다. 생성에 쓰는 도구를 검토/승인한 뒤 gallery에 저장됐는지 확인합니다.</li><li>조회 UTC, 신선도, 누락/실패 원본을 표시하게 합니다. connector 결과는 최대 <strong>5분 cache</strong>가 있을 수 있으므로 <strong>Reload</strong>로 fresh data를 요구합니다.</li><li>정상→카드 지연→복구 상태를 각각 갱신합니다. metric과 조회 시각을 비교합니다. bank panel/query/구간을 한 번 수정하고 <strong>내용 refresh와 saved configuration version</strong>을 구분합니다.</li><li><strong>Copy link to report</strong>로 자신의 계정/승인된 실습 사용자에게 공유합니다. 수신자는 Standard User/Administrator 역할이 필요하고 link만으로 권한이 생기지 않습니다. <strong>Download HTML</strong>은 sanitized static snapshot이라 도구 호출/외부 조회를 할 수 없습니다.</li><li>읽기 액션 하나만 시험합니다. 액션은 saved version의 tool configuration과 <strong>현재 정책/connector 권한</strong>을 사용하며 승인은 실제 호출한 인자에만 적용됩니다. report 보기 권한을 변경 승인으로 취급하지 않습니다.</li><li>생성/구성 변경과 모델 보조 refresh는 active-flow AAU를 쓸 수 있고, connector-only 데이터 refresh는 active-flow AAU가 들지 않습니다. per-report/per-user 예산이 있다고 가정하지 않습니다. HTML 저장 크기 ≤10MB, 429 rate limit, cross-tenant approval 제한을 확인합니다.</li><li>불필요한 자동 refresh를 중지하고 보관/삭제합니다. Delete에는 Administrator가 필요합니다.</li></ol>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/scheduled-tasks">예약 작업</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/live-reports">Live Reports</a></p>
+<label class="check"><input type="checkbox" data-check="lab10">UTC 실행 이력, 실제 결과, 리포트 갱신/버전을 확인하고 반복 실행을 중지했다.</label>
+</section>
+
+<section id="lab11" data-covers="6.7-6.14">
+<h2>Lab 11. IDE/MCP, Playground, Session Insights, 감사</h2><p class="meta">원본 6.7~6.14 · 40~60분 · 사용자 로그인과 Agent 권한 필요</p>
+<h3>11-1. VS Code에서 Azure MCP 경유로 Agent 사용</h3>
+<ol class="steps"><li>VS Code에서 샘플 저장소를 엽니다. 같은 테넌트/구독으로 <code>az login</code>합니다. Agent 리소스 scope의 <strong>Reader(control-plane) + SRE Agent Administrator(data-plane)</strong> 권한을 확인합니다.</li><li><span class="path">VS Code → Extensions → 검색 “Azure MCP Server” → Microsoft 게시자 확장 Install</span>로그인 안내를 완료합니다. 공식 VS Code 경로는 확장이 MCP를 <strong>자동 등록</strong>하는 방식입니다. SRE Agent 문서에 없는 수동 config를 필수 설정이라고 취급하지 않습니다.</li><li>Copilot Chat tool picker에서 <code>sreagent_agents_list</code>, <code>sreagent_threads_create</code> 등 <code>sreagent_</code> 기능을 확인합니다. “구독 &lt;SUBSCRIPTION_ID&gt;의 SRE agents를 나열해”로 discovery를 시험합니다. Resource Graph가 endpoint를 찾아 주므로 URL을 임의로 추측해 넣지 않습니다.</li><li>Copilot CLI도 사용할 경우에만 <code>/mcp add</code> 또는 기존 <code>~/.copilot/mcp.json</code>에 다음 server를 추가합니다. 기존 항목을 덮어쓰지 않습니다.<pre><code>{
+  "mcpServers": {
+    "azure": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@latest", "server", "start"]
+    }
+  }
+}</code></pre></li><li>chat에서 “Agent &lt;AGENT_NAME&gt;에게 &lt;APP_ID&gt; 최근 30분 읽기 전용 조사를 요청해”라고 합니다. 반환된 실제 <strong>thread ID/URL</strong>을 Portal에서 확인하고 같은 thread에 후속 질문을 보냅니다. 다른 앱의 조사는 새 thread로 시작합니다.</li><li>connector/Skill/task 관리도 가능하므로 전체 tool 자동 승인과 <strong>investigate_yolo</strong>를 쓰지 않습니다. MCP trust/approval, Agent 내부 mode/policy, Azure RBAC는 서로 다른 계층입니다. <code>*.azuresre.ai</code>가 회사 proxy에서 차단되면 네트워크 담당자의 승인된 allow-list 절차를 따릅니다.</li></ol>
+<p>Playground는 <strong>Builder → Agent Canvas → Test playground</strong> view에서 열며 Form/YAML 변경은 <strong>Apply</strong> 후 새 test thread에 적용합니다. 평가 결과는 구성 변경 뒤 outdated, 추가 chat 뒤 stale일 수 있으므로 재실행합니다. Refine with AI와 View AI suggestions를 구분하고 자동 수정 후 동일 케이스를 다시 시험합니다.</p>
+<h3>11-2. Test playground와 AI 평가</h3>
+<ol class="steps"><li><span class="path">Agent → Builder → payment-specialist → Test playground</span>저장된 구성을 불러오고 다음 세 test case를 각각 실행합니다.<ul><li>card 지연 + bank 정상: provider 근거를 찾되 DB 원인으로 단정하지 않는다.</li><li>card 예외 + bank 정상: 예외 문자열/구성 변경을 찾고 provider 호출 여부를 비교한다.</li><li>요청 데이터 없음/원본 403: 정상이라고 보고하지 않고 누락과 필요한 권한을 말한다.</li></ul></li><li>도구 입력/결과와 최종 답변을 보고 다음 rubric으로 0/1을 매깁니다: 대상/UTC 고정, 배포 SHA 확인, 카드/계좌 분리, 원본 근거, 경쟁 가설, 권한 실패 구분, 변경 금지 준수, 실제 회복 측정.</li><li>Evaluate/AI evaluation 기능으로 평가하고 사람이 확인한 점수와 비교합니다. Quick fixes가 제안하는 지침 변경을 읽고 승인 전후 Diff를 확인합니다. 자동 적용된 결과를 바로 운영에 배포하지 않습니다.</li><li>지침을 수정한 뒤 같은 테스트 입력 세 개로 재실행합니다. 한 케이스만 좋아지고 다른 케이스가 나빠지지 않았는지 확인하고 저장합니다.</li></ol>
+<h3>11-3. Session Insights와 Operations Hub</h3>
+<ol class="steps"><li><span class="path">Agent → Session Insights → 해당 조사 thread</span>처음 경고/질문부터 원본 조회, 인계, 승인, 조치, 최종 응답까지 타임라인을 읽습니다. 가장 오래 걸린 조회와 반복된 쿼리를 기록합니다.</li><li>잘못된 원인 추정이나 접근 실패가 최종 답변에서 사라지지 않았는지 봅니다. 개선 제안을 Skill/메모리에 반영할 때 현재 근거와 일치하는지 확인하고 같은 테스트를 다시 돌립니다.</li><li><span class="path">Agent → Operations Hub</span>활성/완료 incident, 진행 중 investigation, 승인 대기, 예약 작업 상태를 확인합니다. 조사 완료, 서비스 회복, 후속 업무 완료는 별도 상태입니다.</li></ol>
+<p>Session Insights의 공식 위치는 <strong>Monitor → Session Insights</strong>이며, Timeline / Evaluation / Derived learning을 확인합니다. Operations Hub는 Overview / Incident Analytics / Automation 탭에서 승인 대기와 자동화 성공률/사용량을 비교합니다. 짧은 thread는 평가/인사이트가 없을 수 있습니다.</p>
+<h3>11-4. 감사 근거 확보</h3>
+<ol class="steps"><li><span class="path">Agent → Monitor → Logs → 연결된 Agent Application Insights</span>워크로드 appi가 아니라 <strong>Agent 자체 관측 원본</strong>의 <code>customEvents</code>를 조회합니다. Lab 8 approval/실행과 Lab 9 policy/Hook 결과를 찾습니다.<pre><code>customEvents
+| where timestamp &gt; ago(1d)
+| where name in ("ApprovalDecision", "AgentToolExecution", "AgentAzCliExecution", "AgentHandoff")
+| project timestamp, name, customDimensions
+| order by timestamp asc</code></pre></li><li><span class="path">Web App → Activity log</span>실제 app settings write/restart UTC와 caller를 확인합니다. ThreadId, CallId, ToolName/입력/결과, 승인과 Azure operation을 연결합니다.</li><li>보존/export 경로를 기록합니다. Agent 답변의 성공 문자열만 남기지 않고 실제 변경과 감사 기록을 보관합니다. 접근 실패면 해당 검증을 미완료로 표시합니다.</li></ol>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/mcp-server">SRE Agent MCP</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/agent-playground">Playground</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/review-agent-insights">Session Insights</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/operations-hub">Operations Hub</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/audit-agent-actions">감사</a></p>
+<label class="check"><input type="checkbox" data-check="lab11">IDE의 실제 Agent 스레드, 동일 케이스 재시험, 타임라인과 외부 감사 기록을 확인했다.</label>
+</section>
+
+<section id="lab12" data-covers="6.15-6.26">
+<h2>Lab 12. 데이터 경계, VNet, DNS, 송신 진단</h2><p class="meta">원본 6.15~6.26 · 심화 60~90분 · Network Contributor + Agent Administrator 필요</p>
+<div class="warning"><strong>기본 공개 실습을 마친 뒤 진행합니다.</strong> 사설 endpoint를 켜면 로컬 노트북에서 앱을 호출하거나 ZIP 재배포하기 어려워집니다. 연결되지 않는 원본을 수정하다 회사 네트워크나 공유 방화벽을 바꾸지 않습니다. VNet/Private Endpoint/DNS는 별도 비용이 발생합니다.</div>
+<h3>12-1. 격리와 데이터 보존 경계 기록</h3>
+<ol class="steps"><li>Agent의 생성 리전, 모델 공급자, Agent 자체 App Insights/workspace 리전, 워크로드 리전을 기록합니다. “Azure 리소스가 한국 리전”이라는 사실만으로 모델 처리도 항상 한국이라고 단정하지 않습니다. provider별 data residency/EU boundary 안내를 현재 문서에서 확인합니다.</li><li>대화, 업로드 문서, 추출 메모리, 분석 파일, 운영 로그, 감사 로그의 원본과 보존/삭제 책임을 각각 표로 정리합니다. Log Analytics의 30일 보존은 이 샘플 workspace의 설정일 뿐 모든 Agent 데이터에 적용되는 공통 보존 기간이 아닙니다.</li><li>Agent runtime와 tool execution sandbox의 격리, 관리 ID, 저장소와 접근 경계를 공식 security/data privacy 문서로 확인합니다. 고객 자료를 업로드하지 않고 실습 데이터만 사용합니다.</li></ol>
+<h3>12-2. Limited 송신 시험 — 네트워크 리소스 없이 먼저</h3>
+<ol class="steps"><li><span class="path">Agent → Settings → Workspace configuration → Networking</span><strong>Unrestricted / Limited / Azure VNet</strong> 현재 mode와 “On the infra network” toggle을 기록합니다.</li><li>Limited로 전환할 때 필요한 Azure/GitHub/package/MCP hostname을 목록에 넣습니다. 플랫폼 orchestration/모델/telemetry 경로는 Microsoft 관리 infra로 남으며, 코드·package·원격 MCP·추가 hostname은 토글/지원 경로에 따라 예외가 있습니다. 모든 트래픽이 하나의 방화벽 경로를 통과한다고 가정하지 않습니다.</li><li>실습에서만 쓰는 hostname 하나를 allow-list에서 제외해 읽기 호출의 차단을 시험합니다. 원인을 DNS/timeout/auth/403과 구분해 기록한 뒤 원래 허용 목록으로 복구합니다. 인증이나 Azure control plane 필수 경로를 차단하지 않습니다.</li></ol>
+<h3>12-3. Agent 전용 VNet/subnet 생성</h3>
+<div class="table-wrap"><table><thead><tr><th>리소스 / 값</th><th>설명</th></tr></thead><tbody>
+<tr><td>RG <code>rg-sre-workshop-net-$SUFFIX</code></td><td>Agent와 같은 리전에 생성</td></tr><tr><td>VNet <code>vnet-sre-$SUFFIX</code>, <code>10.70.0.0/16</code></td><td>회사 연결망과 겹치지 않는 실습 주소 공간. 겹치면 다른 CIDR 선택</td></tr><tr><td>subnet <code>snet-agent</code>, <code>10.70.0.0/27</code></td><td>최소 /27 이상, 비어 있는 전용 subnet, <code>Microsoft.App/environments</code> 위임</td></tr><tr><td>subnet <code>snet-private-endpoints</code>, <code>10.70.1.0/24</code></td><td>Private Endpoint 전용. Agent 위임 subnet에 PE를 만들지 않음</td></tr><tr><td>Private Endpoint <code>pe-payment-$SUFFIX</code></td><td>Web App의 <code>sites</code> subresource를 사설로 연결</td></tr><tr><td>Private DNS zone <code>privatelink.azurewebsites.net</code></td><td>Web App 사설 이름 해석, VNet link 필수</td></tr>
+</tbody></table></div>
+<ol class="steps"><li><span class="path">Portal → Virtual networks → Create</span>위 RG/리전/VNet 주소 공간을 입력합니다. IP addresses에서 기본 subnet 대신 위 두 subnet을 만듭니다.</li><li><span class="path">VNet → Settings → Subnets → snet-agent</span>Subnet delegation을 <code>Microsoft.App/environments</code>로 설정합니다. 비어 있음/크기/동일 리전을 확인합니다.</li><li><span class="path">Agent → Settings → Workspace configuration → Networking → Azure VNet → Browse subnets</span>구독 → RG → VNet → <code>snet-agent</code>를 선택하고 <strong>Connect</strong>합니다. Agent는 Running 상태여야 하고, 자신에게 Agent Administrator + subnet join 권한/Network Contributor가 필요합니다.</li><li>연결 후 <strong>Use VNet's private DNS</strong>를 확인합니다. 다른 subnet/mode로 바꾸려면 먼저 Disconnect해야 합니다. 배포 상태가 완료되고 기존 읽기 조회가 정상인지 확인합니다.</li></ol>
+<h3>12-4. 샘플 Web App을 사설 원본으로 만들기</h3>
+<ol class="steps"><li><span class="path">Web App → Networking → Private endpoints → Add</span>이름 <code>pe-payment-$SUFFIX</code>, target subresource <code>sites</code>, VNet <code>vnet-sre-$SUFFIX</code>, subnet <code>snet-private-endpoints</code>를 선택합니다.</li><li>DNS 탭에서 private DNS integration을 켜고 <code>privatelink.azurewebsites.net</code> zone을 만들거나 선택합니다. 생성 후 <span class="path">Private DNS zones → 해당 zone → Virtual network links</span>에 실습 VNet link가 있는지 확인합니다. 자동 생성 여부만 가정하지 말고 확인합니다. 앱/SCM A record도 점검합니다.</li><li>Lab 6과 같은 Python tool 생성 경로에서 <a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/tools/read_workshop_version.py">read_workshop_version.py</a>를 붙여 넣습니다. 이름 <code>read_workshop_version</code>, <code>main(app_url: str)</code>, package 없음, 입력은 <code>https://sre-pay-&lt;suffix&gt;.azurewebsites.net</code>입니다.</li><li>Agent에서 이 도구를 실행해 <strong>resolvedAddresses가 PE의 사설 IP인지</strong>, HTTP 200과 실제 commit/scenario가 돌아오는지 확인합니다. Azure ARM에서 설정만 읽은 것은 사설 데이터 경로 확인이 아닙니다.</li><li>사설 호출이 성공한 뒤에만 <span class="path">Web App → Networking → Public network access</span>를 Disabled로 설정합니다. 자신의 외부 노트북에서 호출 실패, Agent의 직접 Python 조회에서 사설 IP + 200이 동시에 확인되어야 합니다. 실패하면 public access를 복구하고 DNS/네트워크부터 진단합니다.</li><li>이 실습은 <strong>Agent의 outbound VNet 접근</strong>입니다. Agent 자체의 inbound Private Endpoint를 생성하는 절차가 아닙니다. managed connector나 플랫폼 경로가 VNet 예외인지 문서의 traffic matrix를 확인합니다.</li></ol>
+<h3>12-5. Packages, Key Vault, Inspect/Network audit</h3>
+<ol class="steps"><li><span class="path">Agent → Settings → Workspace configuration → Packages</span>기본 Python 도구는 stdlib만 써서 package 설치가 필요 없습니다. 심화로 <code>requests</code>/pip + 명시적 버전을 추가했다면 registry 접근 경로와 설치 결과를 시험하고 원상복구합니다. NuGet은 일반 라이브러리 전역 설치가 아니라 지원되는 .NET CLI tool용입니다.</li><li>GitHub private key secret은 Lab 7의 Secrets User 역할로 읽습니다. 별도 connector가 <strong>Key Vault certificate</strong>를 요구한다면 certificate/key/secret object 종류와 URI, 해당 identity의 필요한 역할을 별도로 확인합니다. GitHub secret을 certificate URL로 대신 넣지 않습니다.</li><li>Key Vault를 private로 만들 경우 별도 PE와 <code>privatelink.vaultcore.azure.net</code> DNS zone/VNet link가 필요합니다. public firewall만 닫고 DNS link를 생략하면 인증 조회가 실패할 수 있습니다. 이 추가 변경은 실제 Key Vault 사설 연결이 필요한 경우에만 합니다.</li><li>현재 UI에 <strong>Inspect / Network audit</strong>이 있으면 문제가 난 호출의 DNS/route/egress/차단 원인을 확인합니다. 버튼이 노출되지 않으면 위 direct Python 결과와 workspace network 설정, Private Endpoint/DNS, 방화벽 로그로 진단하고 “UI 기능 미지원”을 기록합니다.</li><li>포털/chat WebSocket, <code>*.azuresre.ai</code>, <code>sre.azure.com</code>, Azure login/management, App Insights/Log Analytics query 경로를 노트북과 Agent에서 따로 점검합니다. 포털 화면 열림, 인증 성공, 실제 데이터 조회는 다른 검증입니다.</li><li>최종 비교표: 허용 hostname 성공, 차단 hostname 실패, 사설 IP 조회 성공, 잘못된 secret 접근 명시적 실패, packages 설치 성공/실패 원인을 기록합니다. 마치면 앱 public access 복구 또는 사설 접근 가능한 도구로 후속 실습을 진행합니다.</li></ol>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/security-overview">보안 경계</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/data-privacy">데이터/리전</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/network-integration">VNet</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/configure-network-controls">Networking/Packages</a><a href="https://learn.microsoft.com/en-us/azure/app-service/overview-private-endpoint">App Service PE/DNS</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/allow-list-key-vault-firewall">Key Vault 접근</a></p>
+<label class="check"><input type="checkbox" data-check="lab12">데이터/송신 경계를 기록하고 실제 사설 조회와 차단을 검증했다. 생략 항목은 미실습으로 표시했다.</label>
+</section>
+
+<section id="lab13" data-covers="6.27-6.31">
+<h2>Lab 13. IaC, 구성 Export/Clone/Diff/Verify, Cold standby DR</h2><p class="meta">원본 6.27~6.31 · 심화 60~90분 · 두 번째 Agent도 기본 비용 발생</p>
+<h3>13-1. 워크로드 IaC와 Agent IaC를 구분</h3>
+<p>샘플 <code>infra/main.bicep</code>는 결제 워크로드만 배포합니다. Agent의 Skill/Hook/connector/반복 작업을 재현하려면 Microsoft가 제공하는 <strong>Agent templates</strong>를 따로 사용합니다. ARM 리소스 생성과 data-plane extras 적용이 모두 성공해야 전체 구성이 재현됩니다.</p>
+<ol class="steps"><li>샘플 저장소와 별도 위치에 공식 저장소를 clone합니다. Azure CLI, jq, 선택한 IaC backend를 준비합니다.<pre><code>cd ..
+git clone https://github.com/microsoft/sre-agent.git microsoft-sre-agent
+cd microsoft-sre-agent/sreagent-templates
+bash bin/check-prerequisites.sh</code></pre></li><li>공식 <code>README.md</code>에서 현재 recipe 목록과 <code>bin/new-agent.sh</code> 옵션을 읽습니다. 생성하기 전에 <code>--help</code>로 현재 지원 값을 확인합니다. 자신의 실습 구독/이름/RG/리전을 넣고 로컬 구성 폴더를 생성합니다.<pre><code>bash bin/new-agent.sh --help
+# 아래 &lt;RECIPE&gt;와 값은 현재 README의 실제 recipe/옵션으로 바꿉니다.
+bash bin/new-agent.sh --recipe "&lt;RECIPE&gt;" --non-interactive \
+  --set agentName="sre-agent-iac-$SUFFIX" \
+  --set resourceGroup="rg-sre-workshop-iac-$SUFFIX" \
+  --set location="$LOCATION" --set targetRGs="$RG" \
+  -o ./workshop-agent/
+bash bin/deploy.sh ./workshop-agent/ --what-if</code></pre></li><li>what-if에 표시된 RG/리소스/RBAC를 확인합니다. 실제 생성할 경우 <code>bash bin/deploy.sh ./workshop-agent/</code>를 실행하고 ARM phase와 data-plane extras의 성공/skip 기록을 각각 확인합니다. 제한된 CI identity에서 extras가 skip되었다면 전체 배포 성공으로 기록하지 않습니다.</li><li>구성에는 <code>agent.json</code>, connectors, config/skills/subagents/hooks, automations, knowledge 등이 있고 secrets는 별도 <code>connectors.secrets.env</code> 같은 Git 제외 파일로 관리합니다. export 결과에도 민감 값이 포함됐는지 확인합니다.</li></ol>
+<h3>13-2. Export → Diff → Clone → Verify</h3>
+<ol class="steps"><li>공식 templates README의 <strong>Day-2 operations</strong>에서 Export 항목을 열고, 제시된 script 이름과 <code>--help</code>를 확인합니다. running Agent의 구독/RG/name과 출력 폴더를 지정해 export합니다. 메뉴명만 있는 기능이 아니라 공식 저장소 script 기반 작업입니다.</li><li>로컬 구성과 live Agent를 Diff합니다. Skill 설명을 로컬에서 한 줄 수정한 뒤 diff에서 해당 항목만 나타나는지 확인합니다. unrelated connector secret이나 scope를 바꾸지 않습니다.</li><li>공식 <code>bin/clone-agent.sh</code>의 help를 확인하고 source Agent/RG, 새 이름/RG, 출력 폴더로 clone합니다. 실제 배포 전에 자동화가 모두 Off인지 검토합니다. 다른 구독/리전/identity/connector auth가 같은 값으로 자동 완성될 거라고 가정하지 않습니다.</li><li>Verify script의 현재 help/README 예시로 새 Agent를 검증합니다. connectors/Skills/sub-agents/hooks/권한/지식/실제 읽기 도구 호출을 확인합니다. 정적 diff 일치만으로 authentication이나 사설 연결 성공을 보장하지 않습니다.</li><li>소스 구성과 secrets 없는 변경을 Git으로 관리합니다. <strong>Export/Clone은 대화 thread와 진행 중 실행의 동기화가 아닙니다.</strong> 백업 대상과 누락된 runtime state를 기록합니다.</li></ol>
+<div class="notice">Export/Diff/Verify 세부 CLI 옵션은 공식 저장소 버전마다 바뀔 수 있습니다. 이 자료는 확인되지 않은 플래그를 만들어 넣지 않고 <strong>clone한 버전의 README 예시 + 각 script --help</strong>를 기준으로 합니다. 조회한 공식 commit SHA와 실제 실행 명령을 노트에 기록하면 재현성을 확보할 수 있습니다.</div>
+<h3>13-3. Cold standby 만들기 — 자동화는 반드시 Off</h3>
+<ol class="steps"><li>서로 다른 지원 리전의 primary와 standby를 정하고 같은 소스 구성으로 두 Agent를 배포합니다. shared <strong>user-assigned managed identity</strong>와 필요한 scoped RBAC를 두 환경에 연결합니다. system-assigned identity는 Agent마다 다른 principal이므로 역할을 별도로 확인합니다.</li><li>standby의 scheduled tasks, response plans, HTTP triggers, incident scanner/외부 호출을 모두 Off/차단합니다. 저장된 connector 정의와 실제 credential sign-in, VNet/subnet/DNS/PE를 backup 리전에 준비합니다.</li><li>정상 운영 중 standby는 <strong>Stopped</strong>로 유지합니다. Stopped는 active-flow만 줄이고 <strong>always-on 기본 비용을 없애지 않습니다.</strong> 두 Agent의 비용을 예산에 포함합니다.</li><li>runtime thread, 진행 중 조사, accumulated memory/session insights는 자동 동기화되지 않습니다. 업로드 지식도 별도 복사/복구 계획이 필요합니다. 원본 문서는 외부 system of record에 보관합니다.</li></ol>
+<h3>13-4. 격리된 DR 전환 시험과 단일 실행 보장</h3>
+<ol class="steps"><li>실제 장애가 아닌 <strong>워크샵용</strong> DR 선언을 하고 시작 UTC를 기록합니다. primary의 상태와 Service Health/자체 모니터링 근거를 남깁니다.</li><li><strong>먼저 primary를 fence합니다.</strong> Stopped를 확인하거나 모든 활성화 원본을 독립적으로 끄고 HTTP 호출자를 pause합니다. endpoint가 응답하지 않는다는 이유만으로 background execution이 멈췄다고 가정하지 않습니다. standby에 in-flight run이 없는지도 확인합니다.</li><li>그다음 standby를 Start합니다. provisioningState Succeeded, powerState Running, endpoint responsive를 확인합니다. 관리 ID/RBAC/connector 인증/사설 데이터/지식과 대표 읽기 조사를 검증하고 automations가 여전히 Off인지 확인합니다.</li><li>standby의 <strong>새 endpoint</strong>로 격리된 테스트 HTTP 요청 하나를 보내 새 thread가 생기는지 확인합니다. 기존 primary URL이 자동 이동하거나 HTTP Trigger 서명이 같다고 가정하지 않습니다.</li><li>한 개의 읽기 전용 테스트 task만 standby에서 켜서 정확히 한 번 실행시킵니다. primary task가 계속 Off인지, 동일 사건의 실행 thread가 한 곳에만 생성됐는지 확인합니다. 완료 후 task를 끕니다.</li><li>전환 완료 UTC를 기록해 <strong>측정 RTO</strong>를 구합니다. 마지막 구성/지식 백업 시각부터의 차이를 기록해 <strong>측정 RPO 및 잃은 상태</strong>를 정리합니다. Microsoft가 이 워크샵의 RTO/RPO를 보장한다고 쓰지 않습니다.</li><li>복귀도 현재 active인 standby를 먼저 fence → primary 검증/start → 호출자 전환 → primary만 automation enable 순서로 진행합니다. 최종적으로 standby Stopped + 모든 trigger Off를 재확인합니다.</li></ol>
+<div class="success"><strong>통과 기준:</strong> 동일 사건에 대한 중복 실행이 없고, 전환 후 실제 읽기 조사 성공, 실행 원본/새 endpoint/손실 상태와 복귀 순서를 기록했습니다. Agent가 없을 때는 Lab 1 KQL + scenario.sh + 수동 incident report로 대응하는 대체 경로도 한 번 실행합니다.</div>
+<p class="sources"><a href="https://learn.microsoft.com/en-us/azure/sre-agent/deploy-iac">Agent IaC</a><a href="https://github.com/microsoft/sre-agent/tree/main/sreagent-templates">공식 templates</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/disaster-recovery">DR</a></p>
+<label class="check"><input type="checkbox" data-check="lab13">구성 복제 검증과 단일 실행 DR 시험을 기록했다. 생략한 배포/훈련은 미실습으로 표시했다.</label>
+</section>
+
+<section id="cleanup">
+<h2>Lab 14. 사용량 확인, 산출물 저장, 리소스 정리</h2><p class="meta">모든 실습 종료 시 반드시 진행 · 삭제는 직접 확인 후 실행</p>
+<ol class="steps"><li>장애를 <code>healthy</code>로 돌리고 20회 검증합니다. 예약 작업을 Disable하고 인시던트 자동 접수/HTTP Trigger를 중지합니다. DR standby가 켜져 있다면 그것도 함께 중지합니다.</li><li><span class="path">Agent → Settings / Usage → 사용량, 스레드 상세</span>Lab별 사용량을 기록합니다. <span class="path">Portal → Cost Management → Cost analysis → Resource group 필터</span>Agent RG, 워크로드 RG, Grafana/네트워크 RG를 각각 확인합니다. 비용 반영에는 지연이 있습니다.</li><li>RCA, 쿼리 결과, 승인 기록, 복구 전후 지표, 구성 export를 저장합니다. 로그/보고서의 민감 정보를 제거합니다. secrets 없이도 재구성할 수 있는 리소스 이름과 권한 목록을 남깁니다.</li><li><span class="path">Portal → Resource groups → 실습 RG → Overview</span>삭제할 리소스 목록과 태그를 <strong>직접</strong> 확인합니다. 공유 RG이면 전체 삭제를 하지 말고 자신이 만든 리소스만 선택합니다.</li><li>다음 명령은 확인 후 수동 실행합니다. <code>--yes</code>를 넣지 않아 CLI 확인 절차를 유지합니다.<pre><code>az group show --name "$RG" --query '{name:name,tags:tags}' -o json
+az resource list --resource-group "$RG" --query '[].{name:name,type:type}' -o table
+az group delete --name "$RG"
+
+az group show --name "$AGENT_RG" --query '{name:name,tags:tags}' -o json
+az resource list --resource-group "$AGENT_RG" --query '[].{name:name,type:type}' -o table
+az group delete --name "$AGENT_RG"</code></pre>심화 Lab에서 만든 Grafana/VNet/Key Vault/standby RG도 목록 확인 후 정리합니다. Soft-delete와 purge protection이 적용된 Key Vault는 즉시 완전 삭제되지 않을 수 있습니다.</li><li>GitHub connector/App 권한과 Key Vault 접근 역할, 로컬 MCP 설정, 워크샵용 action group을 정리합니다. GitHub App을 uninstall/delete할 때 다른 서비스가 쓰는 App인지 확인합니다. 남아 있는 App Service plan과 SRE Agent가 없는지 Portal에서 재확인합니다.</li></ol>
+<div class="success"><strong>최종 완료:</strong> 실제 생성한 모든 유료 리소스와 반복 트리거를 확인했고, 필요한 자료만 남겼으며, 정리할 수 없는 공유 리소스는 담당자와 후속 조치를 기록했습니다.</div>
+<label class="check"><input type="checkbox" data-check="cleanup">반복 실행을 중지하고 생성한 리소스·권한·비용을 정리했다.</label>
+</section>
+<section id="coverage"><h2>원본 3~6장 대응표</h2><p>각 행의 Lab에서 해당 절을 직접 구성하거나, 추가 권한이 필요한 심화 절차로 검증합니다. 심화 단계를 하지 않았다면 체크 대신 “미실습”으로 기록하세요.</p><div class="table-wrap"><table><thead><tr><th>원본 절</th><th>다루는 내용</th><th>워크샵</th></tr></thead><tbody>
+<tr><td>3.1~3.7</td><td>인시던트, Azure Monitor 선택/병합, 대응 계획, HTTP Trigger, 동적 임계값/학습</td><td><a href="#lab3">Lab 3</a></td></tr><tr><td>3.8~3.11</td><td>Azure 원본, App Insights, 상태/변경, 명시적 조회 대상</td><td><a href="#lab1">Lab 1</a></td></tr><tr><td>3.12~3.17</td><td>커넥터, 도구 선택, Grafana 정의/패널 쿼리, 누락/접근 실패</td><td><a href="#lab4">Lab 4</a></td></tr><tr><td>3.18~3.22</td><td>RCA, 경쟁 가설, 추론, 깊은 조사, 분석 파일</td><td><a href="#lab2">Lab 2</a></td></tr>
+<tr><td>4.1~4.6</td><td>운영 맥락, 메모리 검색/업로드/온보딩/추출/관리</td><td><a href="#lab5">Lab 5</a></td></tr><tr><td>4.7~4.12</td><td>지식·Skill·도구·Agent 구분, Skill 실행/한도, 인계/도구 상속, Python 도구</td><td><a href="#lab6">Lab 6</a></td></tr><tr><td>4.13~4.15</td><td>GitHub와 배포 commit, 인증, BYO App/Key Vault</td><td><a href="#lab7">Lab 7</a></td></tr>
+<tr><td>5.1~5.5, 5.7~5.13</td><td>복구/후속/전달, 신원/사용자 역할/RBAC/PIM/OBO, Review/Autonomous/승인</td><td><a href="#lab8">Lab 8</a></td></tr><tr><td>5.6, 5.14~5.18</td><td>관리형 커넥터 파라미터, 도구 정책/매칭, Hook 시점/우선순위/실패/한도</td><td><a href="#lab9">Lab 9</a></td></tr>
+<tr><td>6.1~6.6</td><td>예약/UTC, Live Reports 생성/버전/공유/액션/한도</td><td><a href="#lab10">Lab 10</a></td></tr><tr><td>6.7~6.14</td><td>IDE/MCP/접근, Playground/평가, Insights, Hub, 감사</td><td><a href="#lab11">Lab 11</a></td></tr><tr><td>6.15~6.26</td><td>격리/보존/리전, VNet/서브넷/송신/Packages/DNS/인증서/네트워크 진단</td><td><a href="#lab12">Lab 12</a></td></tr><tr><td>6.27~6.31</td><td>IaC, Export/Clone/Diff/Verify, Cold standby/전환/상태 손실/RPO</td><td><a href="#lab13">Lab 13</a></td></tr>
+</tbody></table></div></section>
+</main></div>
+<footer>Azure SRE Agent 셀프 스터디 · 샘플은 실습용이며 운영 자동화의 안전성을 보증하지 않습니다.</footer>
+<script>
+"use strict";
+const checks = [...document.querySelectorAll("[data-check]")];
+const status = document.querySelector("#status");
+const storageKey = "azure-sre-workshop-v1";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(storageKey) || "{}"); }
+catch (error) { status.textContent = "진행 기록을 읽을 수 없습니다. 현재 화면에서만 체크합니다."; console.warn(error); }
+if (!saved || typeof saved !== "object" || Array.isArray(saved)) saved = {};
+function updateProgress() {
+  document.querySelector("#progress").textContent = `${checks.filter(c => c.checked).length} / ${checks.length} 완료`;
+}
+checks.forEach(check => {
+  check.checked = saved[check.dataset.check] === true;
+  check.addEventListener("change", () => {
+    saved[check.dataset.check] = check.checked;
+    try { localStorage.setItem(storageKey, JSON.stringify(saved)); }
+    catch (error) { status.textContent = "브라우저가 저장을 차단했습니다. 체크 기록은 이 화면에만 남습니다."; console.warn(error); }
+    updateProgress();
+  });
+});
+updateProgress();
+document.querySelectorAll("pre").forEach(pre => {
+  const button = document.createElement("button");
+  button.type = "button"; button.textContent = "복사";
+  button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(pre.querySelector("code").textContent);
+      button.textContent = "복사 완료";
+      setTimeout(() => { button.textContent = "복사"; }, 1500);
+    } catch (error) {
+      status.textContent = "복사 권한이 없습니다. 코드 블록을 직접 선택해 복사하세요.";
+      console.warn(error);
+      const range = document.createRange(); range.selectNodeContents(pre.querySelector("code"));
+      const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    }
+  });
+  pre.append(button);
+});
+const sections = [...document.querySelectorAll("main section")];
+document.querySelector("#search").addEventListener("input", event => {
+  const term = event.target.value.trim().toLocaleLowerCase("ko");
+  sections.forEach(section => {
+    const match = !term || section.textContent.toLocaleLowerCase("ko").includes(term);
+    section.hidden = !match;
+    const link = document.querySelector(`nav a[href="#${section.id}"]`);
+    if (link) link.hidden = !match;
+  });
+  status.textContent = term ? `${sections.filter(s => !s.hidden).length}개 영역이 검색되었습니다.` : "";
+});
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener("click", () => {
+    const target = document.getElementById(link.getAttribute("href").slice(1));
+    if (target) target.hidden = false;
+    document.querySelector("#sidebar").classList.remove("open");
+    document.querySelector("#menu").setAttribute("aria-expanded", "false");
+  });
+});
+document.querySelector("#menu").addEventListener("click", event => {
+  const open = document.querySelector("#sidebar").classList.toggle("open");
+  event.currentTarget.setAttribute("aria-expanded", String(open));
+});
+document.querySelector("#print").addEventListener("click", () => print());
+</script>
+</body>
+</html>

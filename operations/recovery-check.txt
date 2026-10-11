@@ -1,0 +1,17 @@
+For a final response claiming the workshop incident is recovered:
+require the exact resource ID, deployed sourceCommit, UTC measurement window,
+fresh card AND bank evidence, at least 20 measurements per method,
+zero failed requests, and p95 <= 1000 ms for BOTH methods.
+Require the actual action/tool result, execution identity, approval reference,
+and remaining follow-up owner.
+If evidence is missing, ask the agent to collect it or explicitly report that
+recovery is not yet verified. Do not infer measurements from a healthy setting,
+an alert resolving, or a successful restart.
+For a diagnosis-only response, require a clear "no changes executed" statement,
+evidence sources, uncertainties and the next required verification.
+Do not authorize, execute, or roll back Azure changes from this Hook.
+Return {"ok": false, "reason": "Describe the missing evidence"} if the response
+claims recovery without the required evidence; otherwise return {"ok": true}.
+Never reject without a nonempty reason.
+
+$ARGUMENTS
