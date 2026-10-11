@@ -247,6 +247,21 @@ test("Custom Agent instruction examples meet the 50-character minimum without di
     "A Custom Agent field minimum must not lengthen ordinary incident chat inputs");
 });
 
+test("Lab 4 checks existing log connectors without requiring the later GitHub setup", () => {
+  const lab = html.split('<section id="lab4">')[1]?.split("<h3>4-2.")[0];
+  assert.ok(lab);
+  assert.ok(lab.includes("이 단계에서는 GitHub를 연결하지 않습니다"));
+  assert.ok(lab.includes("새 외부 계정이나 커넥터를 만들 필요는 없습니다"));
+  assert.ok(lab.includes('<a href="#lab7">Lab 7 → Builder → Code Access → GitHub</a>'));
+  assert.ok(lab.includes('<a href="#workload-logs-setup">'));
+  assert.ok(lab.includes("law-aks-payment-kch01x7"));
+  assert.ok(lab.includes("기존 상속을 유지"));
+  const prompt = lab.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.equal(prompt, "payment service의 현재 상태를 확인해 줘.");
+  assert.ok(!lab.includes("기본 실습에서는 다음 Lab 7의 GitHub 연결을 사용합니다"));
+  assert.ok(!lab.includes("특정 파일/대시보드 조회를 요청"));
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
