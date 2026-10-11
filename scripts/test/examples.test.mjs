@@ -101,6 +101,18 @@ test("reference blocks start with a label and the initial resource prompt uses i
   assert.ok(prompt.includes("이 그룹의 AKS"));
 });
 
+test("AKS access instructions check automatic roles before presenting optional grants", () => {
+  assert.ok(html.includes("기본 흐름은 권한 추가가 아니라 자동 할당 확인입니다"));
+  const exception = html.match(/<details id="aks-missing-read-roles">([\s\S]*?)<\/details>/);
+  assert.ok(exception, "Manual role grants belong in a collapsed exception section");
+  assert.ok(exception[1].includes("az role assignment create"));
+  const normalFlow = html.split('<h3>0-4. 자동 할당된 AKS 조회 권한 확인</h3>')[1]?.split('<details id="aks-missing-read-roles">')[0];
+  assert.ok(normalFlow?.includes("az role assignment list"));
+  assert.ok(!normalFlow.includes("az role assignment create"));
+  assert.ok(normalFlow.includes("--include-inherited"));
+  assert.ok(!html.includes("아직 Kubernetes data-plane 권한을 추가하기 전이면"));
+});
+
 test("integrated practice output contains record format rather than grading", () => {
   const match = html.match(/<details class="result-example" id="output-capstone"[\s\S]*?<\/details>/);
   assert.ok(match);

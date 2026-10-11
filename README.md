@@ -62,7 +62,10 @@ Configure logging provider → Log Analytics Workspace → Next에서
 Agent 생성 시 자동 생성한 감사용 App Insights/LAW를 workload 로그 원본으로 대신 선택하지 않습니다.
 동일 RG에 이미 권한이 있으면 역할 효과는 겹칠 수 있습니다. 실제 연결 관리 ID와 적용 scope/저장 결과를 확인합니다.
 로그 카드 표시와 실제 query 성공은 다르므로 다른 RG의 workspace, access mode/네트워크, 별도 connector 신원을 구분합니다.
-Pod 접근에는 Agent 실행 UAMI의 AKS credential 역할과 `payments` namespace data-plane Reader가 별도로 필요합니다.
+SRE Agent의 Reader 권한 수준은 일반 Azure Reader 역할 하나와 다릅니다.
+AKS가 있는 RG 연결에서 Cluster User와 AKS RBAC Reader도 자동 할당될 수 있으므로,
+Pod 접근은 **자동 역할·상속 확인 → 실제 조회** 순서로 진행합니다.
+이미 적용된 역할이 있으면 수동 추가는 하지 않으며, 부족한 역할이 실제 확인될 때만 예외 절차를 사용합니다.
 
 ## 로컬 실행
 

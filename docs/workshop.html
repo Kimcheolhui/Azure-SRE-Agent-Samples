@@ -156,7 +156,7 @@ Azure 리소스 그룹: rg-payment-kch01x7
 <p>LAW 자체에 상속된 Log Analytics Reader가 있다면 workspace 권한이 이미 적용된 것입니다. workspace access mode 때문에 반드시 직접 역할을 다시 할당해야 한다고 해석하지 않습니다. 단순 리소스 Reader만 가진 경우와 LAW에 대한 로그 query 권한이 있는 경우를 구분합니다.</p>
 <p>workspace query는 <code>KubePodInventory / ContainerLogV2 / AppRequests</code>, App Insights resource query는 <code>requests / dependencies / exceptions</code>를 사용합니다. 로그 연결이 기존 앱의 connection string을 바꾸거나 데이터를 Agent용 workspace로 옮기는 것은 아닙니다.</p>
 <p class="sources">참고 문서: <a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-and-set-up">빠른 시작 로그 연결/자동 역할 할당</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/log-analytics-app-insights">Log Analytics와 App Insights 연결</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/permissions">RG 추가 권한</a><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/manage-access">LAW 접근과 scope</a></p>
-<p>아직 Kubernetes data-plane 권한을 추가하기 전이면 아래 질문의 Pod 조회는 Forbidden일 수 있습니다. 이를 읽기 실패로 구분하고, 다음 0-4를 완료한 뒤 같은 대상의 Kubernetes 조회를 다시 확인합니다.</p>
+<p>RG 연결이 완료되면 아래 읽기 조회를 실행합니다. 일반적으로 필요한 AKS 역할도 자동 할당되므로 수동 추가부터 할 필요는 없습니다. Forbidden이 발생한 경우에만 다음 0-4에서 실제 실행 신원과 역할·상속 범위를 확인합니다.</p>
 <pre class="prompt"><code>대상 리소스 그룹: rg-payment-kch01x7.
 리소스 변경 없이 이 그룹의 AKS와 namespace payments의
 Deployment/Pod/Service, 연결된 Application Insights,
@@ -164,8 +164,19 @@ Log Analytics workspace를 조회해 이름, 리소스 ID, 관계를 정리해 �
 현재 접근 가능한 원본과 접근 실패한 원본을 따로 적어 줘.
 추정으로 누락된 데이터를 채우지 말고 Review 모드를 유지해 줘.</code></pre>
 <p class="sources">참고 문서: <a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-and-set-up">Agent 생성 필드/권한</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/supported-regions">지원 리전</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/model-provider-selection">공급자/자동 모델 선택</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/data-privacy">데이터 처리 위치</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/monitor-agent-usage">Agent consumption</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/audit-agent-actions">Agent 감사 원본</a></p>
-<h3>0-4. Agent의 Kubernetes 조회 권한</h3>
-<p>일반 Azure Reader 역할만으로 Pod를 읽을 수는 없습니다. SRE Agent의 RG 연결은 탐지된 리소스 종류에 따라 AKS용 역할도 자동 할당할 수 있으므로, 먼저 실제 UAMI의 역할과 상속 scope를 확인합니다. 이미 AKS Cluster User와 필요한 AKS RBAC Reader가 적용돼 있으면 동일 권한을 다시 추가할 필요는 없습니다. 아래 명령은 <strong>해당 권한이 없는 경우</strong>에만 사용합니다. Reader는 Secret 내용 조회나 exec/port-forward 권한을 주지 않습니다.</p>
+<h3>0-4. 자동 할당된 AKS 조회 권한 확인</h3>
+<p><strong>기본 흐름은 권한 추가가 아니라 자동 할당 확인입니다.</strong> SRE Agent에서 AKS가 있는 RG를 Reader 권한 수준으로 연결하면 리소스 종류에 맞는 AKS 역할도 자동 할당됩니다. 필요한 역할이 이미 상속돼 있으면 추가 명령을 실행하지 않습니다.</p>
+<p>여기서 <strong>일반 Azure Reader 역할</strong>은 Azure 리소스 정보를 읽는 하나의 역할입니다. <strong>SRE Agent의 Reader 권한 수준</strong>은 그 역할에 로그·모니터링과 리소스별 읽기 역할을 함께 할당하는 설정입니다. 두 의미를 혼동하지 않습니다.</p>
+<div class="table-wrap"><table><thead><tr><th>확인할 역할</th><th>용도</th><th>충분한 상속 범위</th></tr></thead><tbody><tr><td>Azure Kubernetes Service Cluster User Role</td><td>AKS 사용자 credential 획득</td><td>AKS가 속한 RG 또는 해당 AKS</td></tr><tr><td>Azure Kubernetes Service RBAC Reader</td><td>Kubernetes 객체·로그 읽기</td><td>RG/AKS에서 상속 또는 payments namespace</td></tr></tbody></table></div>
+<ol class="steps"><li><span class="path">Agent → Settings → Permissions</span>실제 실행 UAMI를 확인합니다. Azure Portal → 해당 Managed Identity → Overview에서 Principal (Object) ID를 사용합니다.</li><li><span class="path">AKS → Access control (IAM) → Role assignments</span>그 UAMI의 Cluster User와 AKS RBAC Reader를 확인합니다. scope가 상위 RG라면 상속된 권한이며, namespace에 별도로 같은 역할을 다시 만들 필요는 없습니다.</li><li>필요하면 아래 <strong>읽기 전용 조회</strong>로 payments에 적용되는 역할을 확인합니다. 이 명령은 역할을 생성하지 않습니다. 권한이 있어도 실제 도구 호출은 실행 신원·접속 경로·권한 전파를 별도로 확인합니다.</li></ol>
+<pre><code>export AGENT_PRINCIPAL="&lt;실제 Agent 실행 UAMI object ID&gt;"
+export CLUSTER_ID=$(az aks show -g "$RG" -n "$CLUSTER" --query id -o tsv)
+az role assignment list --assignee "$AGENT_PRINCIPAL" \
+  --scope "$CLUSTER_ID/namespaces/payments" --include-inherited \
+  --query "[?roleDefinitionName=='Azure Kubernetes Service Cluster User Role' || roleDefinitionName=='Azure Kubernetes Service RBAC Reader'].{role:roleDefinitionName,scope:scope}" \
+  -o table</code></pre>
+<details id="aks-missing-read-roles"><summary>예외: 실제로 필요한 역할이 없는 경우에만 추가</summary>
+<p>먼저 RG 연결의 역할 할당 결과, PIM/설정자 권한, 실제 실행 UAMI와 상속을 확인합니다. 기존 역할로 조회 가능한 상태라면 아래 명령을 실행하지 않습니다. 역할이 없다고 확인된 경우에만 부족한 역할을 추가합니다. Reader는 Secret 내용·exec·port-forward나 Deployment 변경 권한을 주지 않습니다.</p>
 <pre><code>export AGENT_PRINCIPAL="&lt;실제 Agent 실행 UAMI object ID&gt;"
 az role assignment create --assignee-object-id "$AGENT_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal --role "Azure Kubernetes Service Cluster User Role" \
@@ -173,6 +184,7 @@ az role assignment create --assignee-object-id "$AGENT_PRINCIPAL" \
 az role assignment create --assignee-object-id "$AGENT_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal --role "Azure Kubernetes Service RBAC Reader" \
   --scope "$CLUSTER_ID/namespaces/payments"</code></pre>
+</details>
 <p>AKS 진단은 Agent의 기본 내장 도구이므로 별도 kubectl connector를 만들지 않습니다. 실제 cluster/context와 namespace로 <code>get deployment,pods,service</code>를 요청합니다. Forbidden이면 실행 identity와 data-plane 역할을 확인합니다. 포털/ARM 조회와 Kubernetes 객체 접근은 별개입니다.</p>
 <div class="success"><strong>완료 기준:</strong> API/provider 각각2 updated/available replicas, Service2개, /version의 commit/podName/namespace, 실제 결제 응답을 확인합니다. source와 telemetry에는 평가 유형이나 장애 주입 설명이 없어야 합니다.</div>
 <p class="sources">참고 문서: <a href="https://learn.microsoft.com/en-us/azure/aks/learn/quick-kubernetes-deploy-cli">AKS 생성</a><a href="https://learn.microsoft.com/en-us/azure/aks/manage-azure-rbac">AKS Azure RBAC</a><a href="https://learn.microsoft.com/en-us/azure/aks/kubelogin-authentication">kubelogin</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/create-and-set-up">Agent 생성</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/permissions">Agent 권한</a></p>
