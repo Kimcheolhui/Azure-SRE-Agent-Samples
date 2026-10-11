@@ -303,7 +303,7 @@ test("global tool policies and Custom Agent overrides retain their distinct navi
     "Custom Agent creation must remain on Agent Canvas");
 });
 
-test("Skill setup edits the default instructions file without a duplicate supporting upload", () => {
+test("Skill setup edits the default file and tests selection without naming the Skill in chat", () => {
   const skill = html.split("<h3>6-1. Skill 만들기</h3>")[1]?.split("<h3>6-2.")[0];
   assert.ok(skill);
   for (const text of ["SKILL.md (기본값)", "오른쪽 편집기", "# Payment investigation",
@@ -313,6 +313,11 @@ test("Skill setup edits the default instructions file without a duplicate suppor
   }
   assert.ok(!skill.includes("supporting file로 업로드"));
   assert.ok(!/files:\s*\n\s*-\s*SKILL\.md/.test(skill));
+  const prompt = skill.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.equal(prompt, "카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.");
+  assert.ok(skill.includes("Skill 이름이나 사용 지시는 넣지 않습니다"));
+  assert.ok(skill.includes("필요한 Skill을 스스로 선택·로드"));
+  assert.ok(!skill.includes("payment-investigation Skill로 조사해 줘"));
   const sample = readFileSync(new URL("../../operations/payment-investigation/SKILL.md", import.meta.url), "utf8");
   assert.ok(sample.includes("# Payment investigation"));
   assert.ok(sample.includes("Output:"));
