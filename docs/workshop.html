@@ -304,9 +304,7 @@ Pod별 요청과 Pod Ready/restarts, image digest, 이벤트도 확인해.</code
 <ol class="steps"><li>현재 UTC와 commit을 기록하고 장애를 주입합니다.<pre><code>date -u +"%Y-%m-%dT%H:%M:%SZ"
 curl --fail "$APP_URL/version"
 bash scripts/scenario.sh "$RG" "$CLUSTER" dependency-slow
-node scripts/traffic.mjs "$APP_URL" 20 dependency-slow</code></pre>학습자 스크립트는 provider의 SIGNATURE_ITERATIONS를60000→16000000으로 바꿉니다. 실제 PBKDF2 계산이 증가하는 구성 변화이지 sleep/장애 switch가 아닙니다. API는 같은 코드로 계속 의존 요청을 처리합니다.</li><li>podName/namespace별 요청·종속성, provider CPU/로그와 Deployment 변경을 확인합니다. traceId 조인은 queries/investigation.kql을 사용합니다.</li><li>평가 질문에는 대상·관측 증상·발생 구간과 변경 금지 조건만 전달합니다. 조회할 항목이나 원인 후보·검증 방법은 미리 지정하지 않습니다. 다른 접미사를 사용했다면 리소스 그룹 이름을 자신의 값으로 바꿉니다.<pre class="prompt"><code>rg-payment-kch01x7의 AKS에서 payments namespace의 payment-api 카드 결제가 평소보다 느립니다.
-발생 구간은 &lt;UTC_START&gt;~&lt;UTC_END&gt;입니다.
-원인과 영향 범위를 조사해 주세요. 리소스는 변경하지 마세요.</code></pre></li><li>Reasoning/도구 호출 상세에서 조사한 질문, 실행한 조회와 결과를 확인합니다. 실제 조회 데이터가 답변의 결론을 뒷받침하는지 비교합니다.</li><li>복구 후 다시 측정합니다.<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
+node scripts/traffic.mjs "$APP_URL" 20 dependency-slow</code></pre>학습자 스크립트는 provider의 SIGNATURE_ITERATIONS를60000→16000000으로 바꿉니다. 실제 PBKDF2 계산이 증가하는 구성 변화이지 sleep/장애 switch가 아닙니다. API는 같은 코드로 계속 의존 요청을 처리합니다.</li><li>podName/namespace별 요청·종속성, provider CPU/로그와 Deployment 변경을 확인합니다. traceId 조인은 queries/investigation.kql을 사용합니다.</li><li>Agent에는 아래 증상과 조사 요청만 전달합니다. 조사 대상 선택·데이터 조회·원인 검증은 Agent에 맡깁니다.<pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre></li><li>Reasoning/도구 호출 상세에서 조사한 질문, 실행한 조회와 결과를 확인합니다. 실제 조회 데이터가 답변의 결론을 뒷받침하는지 비교합니다.</li><li>복구 후 다시 측정합니다.<pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" healthy
 node scripts/traffic.mjs "$APP_URL" 20 healthy</code></pre></li></ol>
 <h3>2-2. 예외와 전체 불가도 각각 반복</h3>
 <pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" payment-exception
