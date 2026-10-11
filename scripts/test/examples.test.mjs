@@ -255,10 +255,23 @@ test("Lab 4 briefly introduces connector checks without unrelated setup referenc
   assert.ok(lab.includes('<a href="#workload-logs-setup">'));
   assert.ok(lab.includes("law-aks-payment-kch01x7"));
   assert.ok(lab.includes("기존 상속을 유지"));
+  assert.ok(!lab.includes("Agent → Builder → Tools / Global tools"),
+    "Global tool management must not point to the Custom Agent builder");
+  assert.ok(lab.includes('<span class="path">Agent → Capabilities → Tools</span>'));
   const prompt = lab.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
   assert.equal(prompt, "payment service의 현재 상태를 확인해 줘.");
   assert.ok(!lab.includes("기본 실습에서는 다음 Lab 7의 GitHub 연결을 사용합니다"));
   assert.ok(!lab.includes("특정 파일/대시보드 조회를 요청"));
+});
+
+test("global tool policies and Custom Agent overrides retain their distinct navigation", () => {
+  const policies = html.split("<h3>9-2.")[1]?.split("<h3>9-3.")[0];
+  assert.ok(policies?.includes('<span class="path">Agent → Settings → Permissions</span>'));
+  assert.ok(policies.includes("Capabilities → Tools"));
+  assert.ok(!html.includes("Agent → Builder → Tools"),
+    "Neither global tool lists nor global access policies are in Builder");
+  assert.ok(html.includes("Agent → Builder → Agent Canvas → Create → Custom Agent"),
+    "Custom Agent creation must remain on Agent Canvas");
 });
 
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
