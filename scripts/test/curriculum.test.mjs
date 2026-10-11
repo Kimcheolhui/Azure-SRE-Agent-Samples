@@ -34,3 +34,26 @@ test("source text is escaped rather than interpreted as HTML", () => {
   assert.ok(rendered.includes("&lt;script&gt;alert(&quot;test&quot;)&lt;/script&gt;"));
   assert.ok(!rendered.includes('<script>alert("test")</script>'));
 });
+
+test("every explanation topic has its substantive paragraphs embedded in the answer key", () => {
+  for (const section of curriculum.sections) {
+    const rendered = renderCurriculum({
+      ...curriculum,
+      sections: curriculum.sections.map(row => row === section ? {
+        ...row,
+        explanations: row.explanations.map((part, index) => ({
+          ...part, paragraphs: [...part.paragraphs, `topic-evidence-${section.number}-${index}`]
+        }))
+      } : row)
+    }, html);
+    for (let index = 0; index < section.explanations.length; index++) {
+      assert.ok(rendered.includes(`topic-evidence-${section.number}-${index}`));
+    }
+  }
+});
+
+test("topic headings without substantive explanations cannot pass validation", () => {
+  const sections = curriculum.sections.map((section, index) => index === 0 ?
+    { ...section, explanations: [{ heading: "Topic without explanation", paragraphs: [] }] } : section);
+  assert.throws(() => renderCurriculum({ sections }, html), /Incomplete topic explanation/);
+});

@@ -44,7 +44,7 @@ export function createCurriculum(sourceText) {
       chapter: section.phase,
       title: section.title,
       introduction: section.introduction,
-      topics: section.explanation.filter(part => part.heading !== "활용 설계 참고").map(part => part.heading),
+      explanations: section.explanation.filter(part => part.heading !== "활용 설계 참고"),
       questions: section.qa,
       sources: section.sources
     };
@@ -75,23 +75,30 @@ export function renderCurriculum(curriculum, html) {
       const number = `${chapter}.${index}`;
       const section = rows.find(row => row.number === number);
       assert.ok(section, `Missing curriculum section: ${number}`);
+      assert.ok(section.explanations?.length, `Missing topic explanations: ${number}`);
+      for (const part of section.explanations) {
+        assert.ok(part.heading && part.paragraphs?.length, `Incomplete topic explanation: ${number}`);
+      }
       const exercise = mappings.get(number);
       assert.ok(exercise, `Unmapped curriculum section: ${number}`);
       const cardId = `recall-${number.replace(".", "-")}`;
       const questions = section.questions.map(qa =>
         `<p><strong>회상 질문:</strong> ${escape(qa.question)}</p>`).join("\n");
       const answers = section.questions.map(qa => `<p>${escape(qa.answer)}</p>`).join("\n");
+      const explanations = section.explanations.map(part =>
+        `<h5>${escape(part.heading)}</h5>\n${part.paragraphs.map(text => `<p>${escape(text)}</p>`).join("\n")}`).join("\n");
       const sources = section.sources.map(url => {
         assert.ok(/^https:\/\//.test(url), `Invalid source URL: ${url}`);
         return `<a href="${escape(url)}">공식 근거</a>`;
       }).join(" · ");
       blocks.push(`<article class="recall-card" data-section="${number}" data-exercise="${exercise}" id="${cardId}">
 <h4>${number} · ${escape(section.title)}</h4>
-<p><strong>자료 없이 설명:</strong> ${section.topics.map(escape).join(" / ")}</p>
+<p><strong>자료 없이 설명:</strong> ${section.explanations.map(part => escape(part.heading)).join(" / ")}</p>
 ${questions}
 <p><a href="#${exercise}">관련 실습으로 돌아가기</a> · 원본 ${number} (${escape(section.sourceId)})</p>
 <details class="answer-key"><summary>원본 기준 해설 — 먼저 답하고 펼치기</summary>
 ${section.introduction.map(text => `<p>${escape(text)}</p>`).join("\n")}
+${explanations}
 ${answers}
 <p class="sources">${sources}</p>
 </details>
