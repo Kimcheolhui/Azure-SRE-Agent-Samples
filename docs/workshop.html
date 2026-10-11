@@ -375,6 +375,7 @@ bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts</code></pre>
 <tr><td>Severity / 평가 / 해제</td><td>Sev2, 1분마다 평가, 5분 window, <code>autoMitigate=true</code></td></tr>
 </tbody></table></div>
 <p>새 action group은 수신자 없이 만듭니다. 이메일은 Agent 인시던트 연결에 필수가 아닙니다. 이메일도 시험하려면 <span class="path">Portal → Monitor → Alerts → Action groups → ag-payments-kch01x7 → Notifications → Email</span>에서 자신의 주소만 추가합니다. 이 주소는 Git이나 배포 파일에 저장하지 않습니다.</p>
+<p>기존에 Portal에서 <code>autoMitigate=false</code>로 만든 경고는 이 배포로 자동 해제형으로 바뀝니다. 이전 stateless 경고의 Fired 이력과 이번 stateful 경고의 새 발생·해제를 구분합니다. 과거 Fired 이력만으로 현재 결제가 실패한다고 판단하거나 그 이력의 자동 해제를 계속 기다리지 않습니다.</p>
 </li><li>카드 실패를 만들고 요청을 보냅니다. API Pod가 교체됐으면 <strong>port-forward 전용 터미널</strong>에서 Lab 0의 port-forward를 다시 시작한 뒤 아래 traffic 명령을 실행합니다.
 <pre><code>bash scripts/scenario.sh "$RG" "$CLUSTER" payment-exception</code></pre>
 <pre><code>node scripts/traffic.mjs "$APP_URL" 40 payment-exception</code></pre>
