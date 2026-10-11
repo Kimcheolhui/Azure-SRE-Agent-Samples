@@ -44,6 +44,20 @@ test("Lab 1 Agent prompt leaves source selection and log distinctions to the Age
   }
 });
 
+test("Lab 2 incident prompt provides context and symptoms without diagnostic coaching", () => {
+  const lab = html.split('<section id="lab2">')[1]?.split("</section>")[0];
+  const prompt = lab?.match(/<pre class="prompt"><code>([\s\S]*?)<\/code><\/pre>/)?.[1];
+  assert.ok(prompt);
+  assert.equal(prompt.trim().split("\n").length, 3);
+  for (const text of ["rg-payment-kch01x7", "AKS", "payments", "payment-api",
+    "카드 결제가 평소보다 느립니다", "&lt;UTC_START&gt;~&lt;UTC_END&gt;",
+    "원인과 영향 범위", "리소스는 변경하지 마세요"]) {
+    assert.ok(prompt.includes(text), `Incident prompt must preserve essential context: ${text}`);
+  }
+  assert.ok(!/가설|반증|Activity Log|revision|digest|종속성|예외|로그|쿼리|직전 변경|SIGNATURE_ITERATIONS|PBKDF2/.test(prompt),
+    "The incident prompt must not prescribe investigation steps or reveal the cause");
+});
+
 test("Lab 1 embeds the Kubernetes queries and executable read-only inspection commands", () => {
   const logs = html.match(/<li id="lab1-kubernetes-logs">([\s\S]*?)<\/li>/)?.[1];
   const cli = html.match(/<li id="lab1-kubernetes-cli">([\s\S]*?)<\/li>/)?.[1];
