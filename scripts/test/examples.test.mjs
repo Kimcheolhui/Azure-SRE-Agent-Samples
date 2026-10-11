@@ -303,6 +303,21 @@ test("global tool policies and Custom Agent overrides retain their distinct navi
     "Custom Agent creation must remain on Agent Canvas");
 });
 
+test("Skill setup edits the default instructions file without a duplicate supporting upload", () => {
+  const skill = html.split("<h3>6-1. Skill 만들기</h3>")[1]?.split("<h3>6-2.")[0];
+  assert.ok(skill);
+  for (const text of ["SKILL.md (기본값)", "오른쪽 편집기", "# Payment investigation",
+    "같은 파일을 추가로 업로드하지 않습니다", "이번 실습에는 별도로 추가하지 않습니다",
+    "RunAzCliReadCommands", "Skill을 저장"]) {
+    assert.ok(skill.includes(text), `Missing Skill editor instruction: ${text}`);
+  }
+  assert.ok(!skill.includes("supporting file로 업로드"));
+  assert.ok(!/files:\s*\n\s*-\s*SKILL\.md/.test(skill));
+  const sample = readFileSync(new URL("../../operations/payment-investigation/SKILL.md", import.meta.url), "utf8");
+  assert.ok(sample.includes("# Payment investigation"));
+  assert.ok(sample.includes("Output:"));
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
