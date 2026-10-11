@@ -1,0 +1,130 @@
+{
+  "publisher": "Microsoft",
+  "checkedOn": "2026-10-11",
+  "delivery": "Remote unmodified images from Microsoft Learn; no image binaries are redistributed.",
+  "license": "CC BY 4.0 for the corresponding media tracked in MicrosoftDocs/azure-docs",
+  "licenseUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/LICENSE",
+  "termsUrl": "https://learn.microsoft.com/en-us/legal/termsofuse",
+  "images": [
+    {
+      "id": "observability",
+      "task": "lab1",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/diagnose-azure-observability/diagnose-azure-services.svg",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/diagnose-azure-observability",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/diagnose-azure-observability/diagnose-azure-services.svg",
+      "mimeType": "image/svg+xml"
+    },
+    {
+      "id": "deep-investigation",
+      "task": "lab2",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/deep-investigation/sre-agent-chat-window-deep-investigation.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/deep-investigation",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/deep-investigation/sre-agent-chat-window-deep-investigation.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "response-plan",
+      "task": "lab3",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/automate-incidents/response-plan-details.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/automate-incidents",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/automate-incidents/response-plan-details.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "create-skill",
+      "task": "lab6",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/skills/portal-create-skill.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/skills",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/skills/portal-create-skill.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "agent-canvas",
+      "task": "lab6",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/sub-agents/portal-sub-agent-canvas-full.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/sub-agents",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/sub-agents/portal-sub-agent-canvas-full.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "python-code",
+      "task": "lab6",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/create-python-tool/python-tool-code.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/create-python-tool",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/create-python-tool/python-tool-code.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "github-form",
+      "task": "lab7",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/setup-github-byo-app/byo-auth-form.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/setup-github-byo-app",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/setup-github-byo-app/byo-auth-form.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "github-connected",
+      "task": "lab7",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/setup-github-byo-app/byo-auth-connected.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/setup-github-byo-app",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/setup-github-byo-app/byo-auth-connected.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "obo-authorization",
+      "task": "lab8",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/permissions/portal-on-behalf-of-authorization.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/permissions",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/permissions/portal-on-behalf-of-authorization.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "review-autonomous",
+      "task": "lab8",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/run-modes/portal-trigger-review-autonomous-modes.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/run-modes",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/run-modes/portal-trigger-review-autonomous-modes.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "managed-operations",
+      "task": "lab9",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/managed-connectors/office365-operations.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/managed-connectors",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/managed-connectors/office365-operations.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "playground",
+      "task": "lab11",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/common/playground-agent-selected.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/agent-playground",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/common/playground-agent-selected.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "session-insights",
+      "task": "lab11",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/review-session-insights/session-insights-overview.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/review-agent-insights",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/review-session-insights/session-insights-overview.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "operations-hub",
+      "task": "lab11",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/operations-hub/operations-hub-overview-tab.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/operations-hub",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/operations-hub/operations-hub-overview-tab.png",
+      "mimeType": "image/png"
+    },
+    {
+      "id": "agent-consumption",
+      "task": "judgment",
+      "imageUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/media/monitor-agent-usage/consumption-summary-daily.png",
+      "docsUrl": "https://learn.microsoft.com/en-us/azure/sre-agent/monitor-agent-usage",
+      "sourceUrl": "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/sre-agent/media/monitor-agent-usage/consumption-summary-daily.png",
+      "mimeType": "image/png"
+    }
+  ]
+}

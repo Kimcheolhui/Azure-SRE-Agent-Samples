@@ -17,12 +17,34 @@ Lab 완료 체크와 개념 자기점수는 별도로 저장됩니다.
 모든 자기점수가 통과해도 실제 구성 검증·운영 승인·학습 인증을 자동 보증하지 않습니다.
 미지원 기능은 “개념 확인, 실제 구성 미검증”으로 표시하세요.
 
+## 예상 결과물과 참고 화면
+
+각 Lab/학습 과제 마지막에 **18개 결과 예시 패널**이 있습니다.
+상단 “예상 결과물” 목차에서 바로 열 수 있습니다.
+
+- 리소스 목록과 `/version` JSON, 정상/장애 통계, KQL 결과 열
+- RCA/회복/인수인계 보고서, Alert→Thread 연결표
+- Python 도구의 실제 반환 계약, Hook 거부, private 조회 응답 형식
+- 지식 수정 전후, 코드 SHA 대조, 예약/리포트, 평가/감사, DR/비용/정리 기록
+
+정상과 세 장애의 수치 예시는 실제 로컬 샘플을 각 20쌍 실행한 결과입니다.
+Azure 화면/보고서 형식 예시는 실제 Azure 실행 증거가 아니며, 자신의 ID/UTC/실측값으로 대조해야 합니다.
+졸업 과제에는 새 사건 풀이 대신 제출 형식만 제공합니다.
+
+MS Learn 공식 참고 이미지 **15개**를 관련 결과 패널에서 볼 수 있고 확대/원문 보기 기능을 제공합니다.
+각 이미지에 출처·라이선스·어디를 봐야 하는지 설명을 붙였습니다.
+이미지는 Microsoft Learn 원본 URL을 참조하므로 **인터넷이 필요**합니다.
+오프라인/접근 실패 시 안내와 원문 링크를 표시하고 본문·출력 예시는 계속 읽을 수 있습니다.
+이미지 출처와 공개 문서 소스 라이선스는 [image-sources.json](docs/image-sources.json)에 기록했습니다.
+공식 스크린샷은 이 워크샵을 실행한 화면이 아니며 실제 ID/설정/사용량 증거로 제출하면 안 됩니다.
+
 ## 구성
 
 | 경로 | 용도 |
 |---|---|
 | [docs/workshop.html](docs/workshop.html) | 클릭 경로, 생성 값, 프롬프트, 검증, 정리 절차를 포함한 오프라인 HTML |
 | [docs/curriculum.json](docs/curriculum.json) | 원본 105개 절의 번호·주제·질문·해설과 출처 해시 |
+| [docs/image-sources.json](docs/image-sources.json) | 공식 참고 이미지 URL, 원문/공개 소스와 라이선스 기록 |
 | [samples/payment-api](samples/payment-api) | Node.js 결제 API + 실제 HTTP로 호출하는 로컬 provider stub |
 | [infra/main.bicep](infra/main.bicep) | Linux B1 App Service, Log Analytics, Application Insights |
 | [scripts/deploy.sh](scripts/deploy.sh) | 배포 commit 고정, 리소스 생성, ZIP 배포 |

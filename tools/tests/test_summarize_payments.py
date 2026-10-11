@@ -1,4 +1,5 @@
 import importlib.util
+from html.parser import HTMLParser
 import json
 from pathlib import Path
 import unittest
@@ -12,6 +13,34 @@ main = module.main
 
 
 class PaymentSummaryTests(unittest.TestCase):
+    def test_workshop_return_example_matches_real_tool(self):
+        class ExampleParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.collecting = False
+                self.parts = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "pre" and dict(attrs).get("data-result-json") == "summary-tool":
+                    self.collecting = True
+
+            def handle_endtag(self, tag):
+                if tag == "pre":
+                    self.collecting = False
+
+            def handle_data(self, text):
+                if self.collecting:
+                    self.parts.append(text)
+
+        parser = ExampleParser()
+        parser.feed((Path(__file__).resolve().parents[2] / "docs/workshop.html").read_text())
+        example = json.loads("".join(parser.parts))
+        actual = main(json.dumps([
+            {"method": "card", "durationMs": 100, "status": 200},
+            {"method": "bank", "durationMs": 80, "status": 200},
+        ]))
+        self.assertEqual(example, actual)
+
     def test_healthy_and_json_serializable(self):
         result = main(json.dumps([
             {"method": "card", "durationMs": 100, "status": 200},
