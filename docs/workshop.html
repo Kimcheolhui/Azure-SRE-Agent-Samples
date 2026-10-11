@@ -572,7 +572,7 @@ cp operations/service-context.md artifacts/service-context.md</code></pre>
 </li><li>Skill 설정에서 <code>payment-investigation</code>을 선택합니다. YAML에서는 <code>allowed_skills</code>에 그 이름을 넣습니다. 모든 Skill을 허용하려면 <code>enable_skills: true</code>를 사용하지만 이번에는 해당 Skill만 연결합니다.</li><li>저장/Apply 후 새 chat의 <code>/agent</code> picker에서 <code>payment-specialist</code>를 선택하고 다음을 입력합니다.
 <pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
 <p>담당 Agent 이름, Skill 로드와 실제 도구 결과를 확인합니다. 명시적 담당 선택을 시험하는 것이므로 자동 인계 성공으로 기록하지 않습니다.</p></li><li>자동 인계도 시험하려면 기본 Agent의 Handoff Agents 목록에 <code>payment-specialist</code>를 추가하고, 새 일반 chat에 같은 증상을 보냅니다. 실제 handoff 기록이 있는지 확인합니다. 인계는 같은 thread 맥락을 공유하므로 새 컨텍스트가 아닙니다.</li></ol>
-<h3>6-3. Python 도구 만들기와 입력 계약 검증 — 선택 실습</h3>
+<h3>6-3. Python 도구 만들기와 입력 계약 검증 (Optional)</h3>
 <p>이 도구는 <strong>입력으로 받은 측정값만</strong> 요약합니다. Azure를 조회하거나 설정을 바꾸지 않으므로 관리 ID 인증과 외부 패키지가 필요하지 않습니다. 관측 도구와 계산 도구의 증거 책임을 구분하는 연습입니다.</p>
 <ol class="steps"><li><span class="path">Agent → Builder → Agent Canvas → Create → Tool → Python tool</span>Name <code>summarize_payments</code>, Description <code>입력된 결제 측정값의 실패율과 p95를 계산한다.</code>을 입력합니다. Code / Test playground / Identity 탭을 확인합니다.</li><li><a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/tools/summarize_payments.py">summarize_payments.py</a>의 전체 코드를 Code에 넣습니다. <code>main(samples_json: str) -&gt; dict</code>이고 입력은 string 하나입니다. Identity는 Azure 호출이 없으므로 추가 elevation을 쓰지 않고 Packages는 비워 둡니다.</li><li>Test playground의 <strong>samples_json 필드</strong>에 내부 배열 문자열을 입력합니다. UI가 named parameter JSON을 받으면 아래 전체 객체를 사용합니다.<pre><code>{
   "samples_json": "[{\"method\":\"card\",\"durationMs\":100,\"status\":200},{\"method\":\"bank\",\"durationMs\":80,\"status\":200}]"
@@ -582,7 +582,7 @@ cp operations/service-context.md artifacts/service-context.md</code></pre>
 <p>실제 Python 도구 호출과 반환 JSON이 6-3 Test playground 결과와 같은지 확인합니다.</p></li></ol>
 <pre><code>python3 -m unittest discover -s tools/tests -v</code></pre>
 <div class="notice">통계는 nearest-rank p95입니다. 작은 샘플에서 KQL percentile 결과와 정의 차이가 있을 수 있습니다. 실제 종료 판정에는 최소 20쌍 측정과 원본 로그를 요구하세요. 재사용 도구의 이전 호출 상태를 다음 호출이 기억한다고 가정하지 않습니다.</div>
-<h3>6-4. Pod 상태를 해석하는 Python 도구 — 선택 실습</h3>
+<h3>6-4. Pod 상태를 해석하는 Python 도구 (Optional)</h3>
 <p>같은 Python tool 생성 화면에서 Name <code>inspect_pods</code>, Description <code>입력된 payments Pod 목록의 상태를 요약한다.</code>, Code는 <a href="https://github.com/Kimcheolhui/Azure-SRE-Agent-Samples/blob/main/tools/inspect_pods.py">inspect_pods.py</a> 전체를 넣습니다. Identity elevation과 Packages는 필요 없습니다. 로컬 터미널에서 입력 파일을 만듭니다.</p>
 <pre><code>kubectl -n payments get pods -l app=payment-api -o json &gt; artifacts/pods.json
 python3 -c 'import json; from tools.inspect_pods import main; print(json.dumps(main(open("artifacts/pods.json").read()), indent=2))'</code></pre>
