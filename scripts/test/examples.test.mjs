@@ -397,6 +397,18 @@ test("Lab 13 is absent from content, navigation, outputs and progress", () => {
   assert.equal([...html.matchAll(/data-output-for="/g)].length, 17);
 });
 
+test("handoff setup identifies the Custom Agent editor instead of an unverified default-agent list", () => {
+  const specialist = html.split("<h3>6-2. 전문 Agent와 인계</h3>")[1]?.split("<h3>6-3.")[0];
+  assert.ok(specialist);
+  assert.ok(specialist.includes("Agent → Builder → Agent Canvas → payment-specialist 선택 → 편집"));
+  assert.ok(specialist.includes("<strong>Handoff Agents</strong>"));
+  assert.ok(specialist.includes("<strong>다른 Custom Agent</strong>"));
+  assert.ok(specialist.includes("담당 하나만 사용할 때는 비워 두면 됩니다"));
+  assert.ok(specialist.includes("기본 Agent의 자동 담당 선택 목록이 아닙니다"));
+  assert.ok(specialist.includes("<code>/agent</code>"));
+  assert.ok(!html.includes("기본 Agent의 Handoff Agents 목록에"));
+});
+
 test("initial logs setup distinguishes inherited access, workload sources and Agent audit sink", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   for (const text of ["로그 → +", "law-aks-payment-kch01x7", "appi-aks-payment-kch01x7",
