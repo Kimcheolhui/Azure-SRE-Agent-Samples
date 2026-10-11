@@ -119,7 +119,7 @@ Service port-forward는 한 Pod에 연결되므로 전체 replica 부하 분산�
 - AKS Standard control-plane tier, Linux `Standard_D4s_v6` 노드3대, Azure CNI Overlay.
 - ACR Standard(admin disabled), kubelet identity의 AcrPull, digest 고정 이미지.
 - VNet `10.70.0.0/16`: AKS node subnet `/24`, Agent용 별도 `/27` 위임 subnet.
-- App Insights/Log Analytics30일 보존, Container Insights addon + 명시적 DCR/association과 로그 수집 identity 역할.
+- App Insights/Log Analytics30일 보존, 관리 ID 인증 Container Insights addon + 명시적 DCR/association.
 - 비용 최소화보다 실습의 실행 여유를 우선한 기본 구성입니다. AKS Standard control plane과 VM·디스크·ACR·네트워크·로그는 유료입니다.
 - SRE Agent/Grafana/Key Vault는 필요할 때 별도로 생성합니다.
 - `private` 다섯 번째 인자는 새 AKS의 private API 생성 옵션입니다.
@@ -130,6 +130,18 @@ Service port-forward는 한 Pod에 연결되므로 전체 replica 부하 분산�
 기존 클러스터의 동일한 node pool에 다른 VM 크기를 지정하는 재배포는 지원되지 않습니다.
 기존 pool이 다른 VM 크기로 생성됐다면 새 v6 node pool로 이전하거나 새 이름의 실습 클러스터를 만드세요.
 `deploy.sh`는 이미지 빌드와 워크로드 재배포도 수행하므로 기존 장애 상태와 변경을 먼저 확인하세요.
+
+### Container Insights 배포 오류
+
+일부 AKS의 `addonProfiles.omsagent` 응답에는 `enabled/config`만 있고 별도 `identity`가 없습니다.
+템플릿은 이 선택적 필드를 참조하거나 임의의 다른 identity에 수집 권한을 할당하지 않습니다.
+이 구성에서는 AKS가 제공하는 addon 인증과 DCR 연결을 사용합니다.
+`omsagent.identity` 관련 `InvalidTemplate` 오류가 나온다면 이전 템플릿인지 확인하세요.
+AKS 자체가 `Succeeded`여도 전체 ARM 배포는 추가 역할 할당 때문에 실패할 수 있습니다.
+
+수집 상태는 AKS의 `ama-logs` Ready 상태와 workspace의 실제 `KubePodInventory`,
+`KubeEvents`, 앱 배포 후 `ContainerLogV2` 데이터를 확인합니다.
+수집이 안 되면 addon/DCR 연결/네트워크를 조사하며, 다른 관리 ID로 자동 대체하거나 수집 성공으로 처리하지 않습니다.
 
 ## 장애와 복구
 

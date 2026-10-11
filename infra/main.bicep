@@ -197,16 +197,6 @@ resource logAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2023-
   properties: { dataCollectionRuleId: containerLogs.id }
 }
 
-resource logPublisher 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerLogs.id, cluster.id, 'monitoring-publisher')
-  scope: containerLogs
-  properties: {
-    principalId: cluster.properties.addonProfiles.omsagent.identity.objectId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
-  }
-}
-
 output clusterResourceId string = cluster.id
 output registryResourceId string = registry.id
 output registryLoginServer string = registry.properties.loginServer
