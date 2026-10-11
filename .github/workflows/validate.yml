@@ -47,4 +47,9 @@ jobs:
       - name: Verify isolated Agent source snapshot
         run: node scripts/export-agent-source.mjs
       - run: python3 -m unittest discover -s tools/tests -v
-      - run: bash -n scripts/deploy.sh scripts/scenario.sh scripts/connect.sh scripts/lib/aks.sh
+      - run: bash -n scripts/deploy.sh scripts/scenario.sh scripts/connect.sh scripts/monitoring.sh scripts/provision-connection.sh scripts/lib/aks.sh
+      - name: Compile Azure resource templates
+        run: |
+          for template in infra/*.bicep; do
+            az bicep build --file "$template" --stdout > /dev/null
+          done

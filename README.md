@@ -14,6 +14,8 @@ AKS에 결제 앱을 컨테이너로 배포하고 장애 재현·조사·복구�
 | [samples/payment-api](samples/payment-api) | 별도 API/provider HTTP 서비스, Dockerfile |
 | [scripts/deploy.sh](scripts/deploy.sh) | ACR remote build, SHA→digest 고정, Secret 주입과 rollout |
 | [scripts/connect.sh](scripts/connect.sh) | 전용 kubeconfig에 Entra/Azure CLI 로그인 연결 |
+| [scripts/monitoring.sh](scripts/monitoring.sh) | 실패 경고/action group, Disabled 동적 경고, Kubernetes audit를 Bicep으로 생성 |
+| [scripts/provision-connection.sh](scripts/provision-connection.sh) | 선택 실습의 Grafana/Key Vault와 secret 접근 역할 생성 |
 | [scripts/scenario.sh](scripts/scenario.sh) | Deployment env 장애와 ImagePullBackOff 재현·정상 digest 복구 |
 | [scripts/export-agent-source.mjs](scripts/export-agent-source.mjs) | Agent에 제공할 런타임 코드만 별도 snapshot으로 생성 |
 | [scripts/traffic.mjs](scripts/traffic.mjs) | 카드/계좌 요청 실패율·p95 검증 |
@@ -115,10 +117,49 @@ node scripts/export-agent-source.mjs
 이전 리소스·로그·Git 이력은 자동 삭제하지 않으며, “단서가 전혀 없다”는 결과를 보장하지 않습니다.
 직접 Agent의 조회 범위를 확인해야 합니다.
 
-원인을 알려 주지 않는 질문 예: “AKS <ID>, payments namespace에서 카드 결제가 느리다는 보고가 있다.
-<UTC 구간>의 원인과 영향을 조사하고 조회 근거/미확인 사항을 구분해 줘.”
+원인을 알려 주지 않는 질문 예: “카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.”
 scenario 이름, 변경한 변수/값, 예상 RCA나 복구 명령은 질문에 넣지 않습니다.
 Skill/Hook/메모리 기능 실습은 독립 진단 평가와 별도의 Agent에서 수행하는 것을 권장합니다.
+
+## Lab 3 이후 반복 가능한 Azure 설정
+
+저장소 루트에서 기존 `RG`, `CLUSTER`, `SUFFIX`, `LOCATION` 변수를 사용합니다.
+AKS를 다시 배포하지 않습니다.
+
+```bash
+bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts --what-if
+bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts
+bash scripts/monitoring.sh "$RG" "$CLUSTER" dynamic
+bash scripts/monitoring.sh "$RG" "$CLUSTER" audit
+```
+
+- 실패 경고는 LAW의 `FailedRequests > 5`, 5분 window/1분 평가, Sev2, 자동 해제입니다.
+- 같은 이름의 action group이 있으면 수신자를 유지합니다. 새 그룹은 이메일/Webhook 없이 만듭니다.
+- 동적 경고는 AKS가 아닌 App Insights의 `requests/duration`을 사용하며 기본 Disabled입니다.
+- audit는 `AKSAuditAdmin`에 저장합니다. 설정 이전 변경은 소급 수집되지 않습니다.
+- Azure Monitor 경고 수집은 구독 범위입니다. 관리 RG의 조사 권한과 response plan의 선택 필터는 별개입니다.
+
+Grafana/Key Vault는 선택 실습이며 추가 비용과 역할 할당 권한이 필요합니다.
+Key Vault의 `AGENT_PRINCIPAL`은 실제 connector 실행 UAMI의 Object ID를 지정합니다.
+PEM은 template에 넣지 않고 `az keyvault secret set --file ... -o none`으로 업로드합니다.
+
+```bash
+bash scripts/provision-connection.sh grafana "$SUFFIX" "$LOCATION"
+bash scripts/provision-connection.sh keyvault "$SUFFIX" "$LOCATION"
+```
+
+private AKS는 먼저 인프라만 생성한 뒤 새 VNet에 접근할 관리 호스트에서 workload를 배포합니다.
+
+```bash
+bash scripts/deploy.sh rg-payment-private-kch01x7 \
+  aks-payment-private-kch01x7 acrpaymentprivatekch01x7 eastus2 private --infra-only
+```
+
+코드 연결에는 실제 `/version`의 전체 SHA로
+`node scripts/export-agent-source.mjs "$SOURCE_COMMIT"`을 실행합니다.
+로컬 Git에 해당 revision이 없으면 명시적으로 실패하며 HEAD로 대체하지 않습니다.
+Lab 13에는 검증한 공식 templates 버전과 recipe/export/diff/clone/verify 명령이 있습니다.
+새 Agent의 실제 배포와 DR은 유료 선택 단계입니다.
 
 ## Azure AKS 배포
 

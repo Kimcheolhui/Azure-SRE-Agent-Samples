@@ -132,6 +132,16 @@ test("slow and unavailable controls use actual provider cost and replica count",
   assert.ok(unavailable.calls.some(c => c.args?.includes("--replicas=0") && c.args.includes("deployment/payment-provider")));
 });
 
+test("private infrastructure bootstrap stops before Kubernetes access and image build", async t => {
+  const { calls, result } = await mocks(t, "deploy.sh",
+    ["rg-payment-test", "aks-payment-test", "acrpaymenttest", "eastus2", "private", "--infra-only"]);
+  assert.ok(result.stdout.includes("no image build, credentials or workload deployment"));
+  assert.ok(calls.some(call => call.tool === "az" && call.args.includes("privateCluster=true")));
+  assert.ok(!calls.some(call => call.tool === "az" && call.args.includes("get-credentials")));
+  assert.ok(!calls.some(call => call.tool === "az" && call.args.includes("build")));
+  assert.ok(!calls.some(call => call.tool === "kubectl"));
+});
+
 test("deployed source and Agent knowledge do not contain intentional-failure labels or branches", () => {
   for (const file of ["src/app.js", "src/config.js", "src/provider.js", "src/provider-server.js",
     "src/server.js", "src/telemetry.js", "package.json"]) {
@@ -147,18 +157,21 @@ test("deployed source and Agent knowledge do not contain intentional-failure lab
 test("exported Agent source excludes control scripts, tests and learner documents", async t => {
   const directory = mkdtempSync(join(tmpdir(), "payment-source-export-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  const git = join(directory, "git");
-  writeFileSync(git, "#!/bin/sh\nif [ \"$1\" = rev-parse ]; then printf '%s\\n' 1111111111111111111111111111111111111111; fi\n");
-  chmodSync(git, 0o755);
-  await exec(process.execPath, [join(root, "scripts/export-agent-source.mjs")], {
-    env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, PAYMENT_SOURCE_DIR: directory }
+  const { stdout } = await exec("git", ["-C", root, "rev-parse", "HEAD"]);
+  const commit = stdout.trim();
+  await exec(process.execPath, [join(root, "scripts/export-agent-source.mjs"), commit], {
+    env: { ...process.env, PAYMENT_SOURCE_DIR: directory }
   });
-  const output = join(directory, "source-1111111111111111111111111111111111111111");
+  const output = join(directory, `source-${commit}`);
   assert.deepEqual(readdirSync(output).sort(), ["Dockerfile", "package-lock.json", "package.json", "release.json", "src"]);
   const release = JSON.parse(readFileSync(join(output, "release.json"), "utf8"));
-  assert.equal(release.sourceCommit.length, 40);
+  assert.equal(release.sourceCommit, commit);
+  const original = await exec("git", ["-C", root, "show", `${commit}:samples/payment-api/src/app.js`]);
+  assert.equal(readFileSync(join(output, "src/app.js"), "utf8"), original.stdout);
   assert.ok(release.files["src/provider.js"]);
   assert.ok(Object.values(release.files).every(hash => /^[a-f0-9]{64}$/.test(hash)));
+  await assert.rejects(exec(process.execPath, [join(root, "scripts/export-agent-source.mjs"), "main"],
+    { env: { ...process.env, PAYMENT_SOURCE_DIR: directory } }));
 });
 
 test("infrastructure and workshop use Standard tiers and three adequately sized nodes", () => {

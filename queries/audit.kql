@@ -1,0 +1,7 @@
+AKSAuditAdmin
+| where TimeGenerated > ago(30m)
+| extend namespace=tostring(ObjectRef.namespace), resource=tostring(ObjectRef.resource)
+| where namespace == "payments" and resource == "deployments"
+| project TimeGenerated, Verb, namespace, deployment=tostring(ObjectRef.name),
+          status=toint(ResponseStatus.code), user=tostring(User.username)
+| order by TimeGenerated desc

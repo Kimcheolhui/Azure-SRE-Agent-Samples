@@ -30,8 +30,27 @@ class PodInspectionTests(unittest.TestCase):
         self.assertEqual(result["count"], 0)
         self.assertNotIn("recovered", result)
 
+    def test_accepts_kubectl_generic_list_of_pods(self):
+        result = module.main(json.dumps({
+            "apiVersion": "v1", "kind": "List", "metadata": {},
+            "items": [{
+                "apiVersion": "v1", "kind": "Pod",
+                "metadata": {"name": "payment-api-abc", "namespace": "payments"},
+                "status": {"phase": "Running", "containerStatuses": [{
+                    "name": "payment-api", "ready": True, "restartCount": 0,
+                    "imageID": "example@sha256:abc", "state": {"running": {}}
+                }]}
+            }]
+        }))
+        self.assertEqual(result["count"], 1)
+        self.assertTrue(result["pods"][0]["containers"][0]["ready"])
+
     def test_rejects_bad_shape_and_other_namespaces(self):
         for value in ['[]', '{}', '{"kind":"PodList","items":null}',
+                      '{"kind":"List","items":[{"kind":"Service"}]}',
+                      '{"kind":"PodList","items":[{"metadata":null}]}',
+                      '{"kind":"PodList","items":[{"metadata":{"namespace":"payments"},"status":null}]}',
+                      '{"kind":"PodList","items":[{"metadata":{"namespace":"payments"},"status":{"containerStatuses":null}}]}',
                       '{"kind":"PodList","items":[{"metadata":{"namespace":"production"}}]}']:
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):

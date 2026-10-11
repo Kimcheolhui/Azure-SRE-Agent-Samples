@@ -1,0 +1,4 @@
+AppRequests
+| where TimeGenerated > ago(5m) and Name == "GET /pay"
+| where Success == false
+| summarize FailedRequests=count()

@@ -117,7 +117,7 @@ test("Hook rejection has a nonempty reason and private AKS output is explicitly 
   assert.ok(hook.reason.length > 0);
   assert.ok(html.includes("enablePrivateCluster=true"));
   assert.ok(html.includes("Pod 이름은 출력 형식 예시"));
-  assert.ok(html.includes("namespace RBAC Reader"));
+  assert.ok(html.includes("Azure Kubernetes Service RBAC Reader"));
   assert.ok(!html.includes("azurewebsites.net"));
 });
 
@@ -174,7 +174,9 @@ test("Portal resource names use the filled suffix while terminal commands keep v
     assert.ok(inlineCodes.includes(name), `Missing complete UI resource name: ${name}`);
   }
   const lab3 = html.split('<section id="lab3">')[1]?.split("</section>")[0];
-  assert.ok(lab3?.includes('이름 <code>ag-payments-kch01x7</code>, display name <code>sre-lab</code>, 리소스 그룹 <code>rg-payment-kch01x7</code>'));
+  assert.ok(lab3?.includes("<code>ag-payments-kch01x7</code>"));
+  assert.ok(lab3.includes("<code>rg-payment-kch01x7</code>"));
+  assert.ok(lab3.includes('bash scripts/monitoring.sh "$RG" "$CLUSTER" alerts'));
   assert.ok(html.includes('export CLUSTER="aks-payment-$SUFFIX"'));
   assert.ok(html.includes('bash scripts/deploy.sh "$RG" "$CLUSTER" "$ACR" "$LOCATION"'));
   assert.ok(html.includes('az monitor data-collection rule show -g "$RG" -n "dcr-$CLUSTER"'));

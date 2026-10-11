@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 4 || $# -gt 5 ]]; then
-  echo "Usage: bash scripts/deploy.sh <dedicated-rg> <aks-payment-name> <unique-acr-name> <azure-region> [private]" >&2
+if [[ $# -lt 4 || $# -gt 6 ]]; then
+  echo "Usage: bash scripts/deploy.sh <dedicated-rg> <aks-payment-name> <unique-acr-name> <azure-region> [private [--infra-only]]" >&2
   exit 2
 fi
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -11,9 +11,13 @@ validate_target "$1" "$2"
 REGISTRY=$3
 LOCATION=$4
 PRIVATE=false
-if [[ $# == 5 ]]; then
+if [[ $# -ge 5 ]]; then
   if [[ "$5" != "private" ]]; then echo "Fifth argument must be private." >&2; exit 2; fi
   PRIVATE=true
+fi
+if [[ $# == 6 && "$6" != "--infra-only" ]]; then
+  echo "Sixth argument must be --infra-only." >&2
+  exit 2
 fi
 if [[ ! "$REGISTRY" =~ ^[a-z][a-z0-9]{4,49}$ ]]; then
   echo "ACR name must be 5-50 lowercase letters/digits, starting with a letter." >&2
@@ -34,6 +38,11 @@ az deployment group create --resource-group "$RG" --name payment-platform \
   --template-file "$ROOT/infra/main.bicep" \
   --parameters clusterName="$CLUSTER" registryName="$REGISTRY" deployerObjectId="$DEPLOYER" \
     location="$LOCATION" privateCluster="$PRIVATE" -o none
+if [[ $# == 6 ]]; then
+  echo "Private AKS infrastructure created; no image build, credentials or workload deployment attempted."
+  echo "Prepare a management host on the new VNet, then run the same command without --infra-only."
+  exit 0
+fi
 az acr build --registry "$REGISTRY" --image "payment-api:$COMMIT" --platform linux/amd64 \
   --build-arg SOURCE_COMMIT="$COMMIT" "$ROOT/samples/payment-api"
 LOGIN_SERVER=$(az acr show --name "$REGISTRY" --query loginServer -o tsv)
