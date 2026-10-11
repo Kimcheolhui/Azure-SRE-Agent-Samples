@@ -122,3 +122,18 @@ test("deployment builds remotely, pins digest and feeds Secret through stdin", a
   assert.ok(manifests.some(text => text.includes("acrsretest.azurecr.io/payment-api@sha256:")));
   assert.ok(!calls.filter(c => c.args).some(c => c.args.some(a => a.includes("InstrumentationKey="))));
 });
+
+test("infrastructure and workshop use Standard tiers and two adequately sized nodes", () => {
+  const infrastructure = readFileSync(join(root, "infra/main.bicep"), "utf8");
+  const workshop = readFileSync(join(root, "docs/workshop.html"), "utf8");
+  const readme = readFileSync(join(root, "README.md"), "utf8");
+  assert.ok(infrastructure.includes("sku: { name: 'Base', tier: 'Standard' }"));
+  assert.ok(infrastructure.includes("sku: { name: 'Standard' }"));
+  assert.ok(infrastructure.includes("param nodeVmSize string = 'Standard_D4s_v5'"));
+  assert.ok(infrastructure.includes("count: 2"));
+  assert.ok(workshop.includes("Standard tier · D4s_v5×2"));
+  assert.ok(readme.includes("ACR Standard"));
+  for (const content of [infrastructure, workshop, readme]) {
+    assert.ok(!/tier: 'Free'|AKS Free|ACR Basic|Standard_D2s_v5|D2s_v5×1/.test(content));
+  }
+});

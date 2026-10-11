@@ -83,15 +83,19 @@ Service port-forward는 한 Pod에 연결되므로 전체 replica 부하 분산�
 
 ## 리소스와 비용
 
-- AKS Free control-plane tier, Linux `Standard_D2s_v5` 노드1대, Azure CNI Overlay.
-- ACR Basic(admin disabled), kubelet identity의 AcrPull, digest 고정 이미지.
+- AKS Standard control-plane tier, Linux `Standard_D4s_v5` 노드2대, Azure CNI Overlay.
+- ACR Standard(admin disabled), kubelet identity의 AcrPull, digest 고정 이미지.
 - VNet `10.70.0.0/16`: AKS node subnet `/24`, Agent용 별도 `/27` 위임 subnet.
 - App Insights/Log Analytics30일 보존, Container Insights addon + 명시적 DCR/association과 로그 수집 identity 역할.
-- **VM·디스크·ACR·outbound 네트워크·로그는 유료**이고 AKS Free는 무료 전체 실습이 아닙니다.
+- 비용 최소화보다 실습의 실행 여유를 우선한 기본 구성입니다. AKS Standard control plane과 VM·디스크·ACR·네트워크·로그는 유료입니다.
 - SRE Agent/Grafana/Key Vault는 필요할 때 별도로 생성합니다.
 - `private` 다섯 번째 인자는 새 AKS의 private API 생성 옵션입니다.
   VNet 관리 호스트가 필요하며 기존 public cluster의 toggle이라고 가정하지 않습니다.
 - AKS 지원 버전은 생성 시 서비스가 선택하며, 지역의 VM availability/vCPU quota를 먼저 확인하세요.
+
+노드 기본 용량은 합계8 vCPU/32GiB 메모리입니다. 노드 업데이트의 surge 용량도 고려해 구독 quota를 확인하세요.
+이미 실습 클러스터를 만들었다면 같은 이름으로 `deploy.sh`를 다시 실행해 IaC 구성을 적용할 수 있습니다.
+이 명령은 이미지 빌드와 워크로드 재배포도 수행하므로 기존 장애 상태와 변경을 먼저 확인하세요.
 
 ## 장애와 복구
 

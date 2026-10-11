@@ -6,7 +6,7 @@ param clusterName string
 param registryName string
 param deployerObjectId string
 param location string = resourceGroup().location
-param nodeVmSize string = 'Standard_D2s_v5'
+param nodeVmSize string = 'Standard_D4s_v5'
 param privateCluster bool = false
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -31,7 +31,7 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
 resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: registryName
   location: location
-  sku: { name: 'Basic' }
+  sku: { name: 'Standard' }
   properties: { adminUserEnabled: false }
 }
 
@@ -84,7 +84,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-10-01' = {
     userAssignedIdentities: { '${clusterIdentity.id}': {} }
   }
   dependsOn: [networkAccess]
-  sku: { name: 'Base', tier: 'Free' }
+  sku: { name: 'Base', tier: 'Standard' }
   properties: {
     dnsPrefix: clusterName
     enableRBAC: true
@@ -102,7 +102,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-10-01' = {
       {
         name: 'system'
         mode: 'System'
-        count: 1
+        count: 2
         vmSize: nodeVmSize
         osType: 'Linux'
         osSKU: 'Ubuntu'
