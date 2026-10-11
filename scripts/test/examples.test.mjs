@@ -44,16 +44,19 @@ test("AKS instructions use Kubernetes scopes, immutable image and reconnect afte
 test("Agent creation includes concrete names, separate observability and neutral initial setup", () => {
   const setup = html.split('<h3 id="agent-setup">')[1]?.split("<h3>0-4.")[0];
   assert.ok(setup, "Agent creation instructions are missing");
-  for (const text of ["rg-payment-agent-kch01x7", "agent-payments-kch01x7",
+  for (const text of ["rg-payment-agent-kch01x7", "sre-payments-kch01x7",
     "appi-agent-payments-kch01x7", "law-agent-payments-kch01x7",
-    "East US 2", "Azure OpenAI", "Workspace details", "기존 리소스 선택",
+    "East US 2", "Anthropic", "Workspace details", "기존 리소스 선택",
     "5,000 AAU", "Principal (Object) ID", "Review", "Reader"]) {
     assert.ok(setup.includes(text), `Missing explicit creation choice: ${text}`);
   }
   assert.ok(setup.includes("payment-telemetry Secret에 넣지 않습니다"));
   assert.ok(setup.includes("scenario.sh·예상 RCA를 연결/업로드하지 않습니다"));
-  assert.ok(setup.includes("현재 기본 공급자는 Anthropic"));
+  assert.ok(setup.includes("이번 구성에서는 <strong>Anthropic을 사용</strong>"));
   assert.ok(setup.includes("개별 모델이나 모델 deployment 이름을 선택하지 않습니다"));
+  assert.ok(setup.includes('Model provider</td><td><strong>Anthropic</strong>'));
+  assert.ok(!setup.includes("Azure OpenAI"));
+  assert.ok(html.includes('export AGENT_NAME="sre-payments-$SUFFIX"'));
   const subscription = setup.match(/<tr><td>Subscription<\/td>([\s\S]*?)<\/tr>/)?.[1];
   assert.ok(subscription);
   assert.ok(subscription.includes("&lt;YOUR_SUBSCRIPTION_NAME&gt;"));
