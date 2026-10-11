@@ -264,6 +264,24 @@ test("Lab 4 briefly introduces connector checks without unrelated setup referenc
   assert.ok(!lab.includes("특정 파일/대시보드 조회를 요청"));
 });
 
+test("Lab 4 uses the native Grafana connector and distinct panel query formatting", () => {
+  const lab = html.split('<section id="lab4">')[1]?.split("</section>")[0];
+  const connector = lab?.match(/<li id="grafana-native-connector">([\s\S]*?)<\/li>/)?.[1];
+  assert.ok(connector);
+  assert.ok(connector.includes('<table id="grafana-connector-values">'));
+  for (const text of ["Azure Managed Grafana", "payment-grafana", "rg-payment-grafana-kch01x7",
+    "amg-sre-kch01x7", "Viewer (read-only)", "검토 + 연결 테스트", "도구 선택"]) {
+    assert.ok(connector.includes(text), `Missing native connector setup: ${text}`);
+  }
+  assert.ok(!/Streamable-HTTP|\/api\/azure-mcp|Bearer/.test(connector));
+  assert.ok(!lab.includes("Add service account"));
+  assert.ok(!lab.includes("payment-mcp-kch01x7"));
+  assert.ok(lab.includes("쿼리 편집기의 Format as를 Time series"));
+  assert.ok(lab.includes("<strong>같은 대시보드</strong>"));
+  const template = readFileSync(new URL("../../infra/grafana.bicep", import.meta.url), "utf8");
+  assert.ok(template.includes("apiKey: 'Disabled'"));
+});
+
 test("Lab 4 omits the optional missing-resource exercise and retains connection verification", () => {
   const lab = html.split('<section id="lab4">')[1]?.split("</section>")[0];
   assert.ok(lab);

@@ -10,7 +10,7 @@ resource grafana 'Microsoft.Dashboard/grafana@2023-09-01' = {
   sku: { name: 'Standard' }
   properties: {
     publicNetworkAccess: 'Enabled'
-    apiKey: 'Enabled'
+    apiKey: 'Disabled'
     deterministicOutboundIP: 'Enabled'
     zoneRedundancy: 'Disabled'
   }

@@ -458,10 +458,10 @@ cleanup: 실습 경고 Disabled / payment-failure-review Off</code></pre>
 <pre class="prompt"><code>payment service의 현재 상태를 확인해 줘.</code></pre>
 <p>도구 호출 상세에서 실제 조회 원본과 반환 데이터를 확인합니다. 커넥터에 Connected가 표시되는 것과 실제 데이터 조회 성공은 별개입니다. 조회가 실패하면 해당 도구의 오류를 확인하고 Lab 0의 원본·신원·권한 설정을 점검합니다.</p></li></ol>
 <h3>4-2. Azure Managed Grafana 만들기 — 심화</h3>
-<p>Grafana는 유료 선택 실습입니다. 리소스 생성은 Bicep으로 하고 로그인·대시보드·인증 동의만 화면에서 진행합니다.</p>
+<p>Grafana는 유료 선택 실습입니다. 리소스 생성은 Bicep으로 하고 로그인·대시보드·커넥터 설정만 화면에서 진행합니다. 이미 <code>amg-sre-kch01x7</code>을 만들었다면 아래 생성 명령을 다시 실행하지 않고 기존 인스턴스를 사용합니다.</p>
 <pre><code>bash scripts/provision-connection.sh grafana "$SUFFIX" "$LOCATION"</code></pre>
 <p>생성 스크립트는 Grafana 리소스만 만듭니다. <strong>Grafana 사용자 역할과 관리 ID의 로그 조회 역할은 아래에서 별도로 부여</strong>해야 합니다. Azure RG의 Owner/Contributor가 있어도 Grafana 화면 접근 권한이 자동으로 생기는 것은 아닙니다. Endpoint를 열기 전에 다음 순서대로 진행합니다.</p>
-<ol class="steps"><li><span class="path">Portal → Azure Managed Grafana → <code>amg-sre-kch01x7</code></span>전용 RG <code>rg-payment-grafana-kch01x7</code>, Standard tier, Provisioning Succeeded, 관리 ID와 service account 사용 설정을 확인합니다.</li>
+<ol class="steps"><li><span class="path">Portal → Azure Managed Grafana → <code>amg-sre-kch01x7</code></span>전용 RG <code>rg-payment-grafana-kch01x7</code>, Standard tier, Provisioning Succeeded와 관리 ID를 확인합니다. 이번에는 Azure Managed Grafana 전용 커넥터를 사용하므로 service account/token을 만들 필요가 없습니다.</li>
 <li id="grafana-user-access"><strong>자신의 계정에 Grafana Admin 부여:</strong> 로컬 터미널에서 먼저 로그인 계정과 기존 역할을 확인합니다. 이 계정은 Grafana를 열 때 브라우저에서 로그인할 계정과 같아야 합니다. 다른 접미사를 썼다면 아래 두 리소스 이름을 바꿉니다.
 <pre><code>GRAFANA_ID=$(az resource show -g rg-payment-grafana-kch01x7 \
   -n amg-sre-kch01x7 --resource-type Microsoft.Dashboard/grafana \
@@ -472,7 +472,7 @@ az role assignment list --assignee "$USER_PRINCIPAL" --scope "$GRAFANA_ID" \
   --include-inherited --include-groups \
   --query "[?roleDefinitionName=='Grafana Admin' || roleDefinitionName=='Grafana Editor' || roleDefinitionName=='Grafana Viewer'].{role:roleDefinitionName,scope:scope}" \
   -o table</code></pre>
-<p>목록에 적용된 <strong>Grafana Admin</strong>이 없다면 아래 명령을 직접 실행합니다. Viewer는 화면 열기, Editor는 대시보드 편집용이며, 이번 실습의 service account/token 관리에는 Admin을 사용합니다. 역할은 구독 전체가 아니라 <strong>이 Grafana 인스턴스 하나</strong>에만 부여합니다. 실행 계정에는 이 scope의 Owner/User Access Administrator 등 역할 할당 권한이 필요합니다.</p>
+<p>이미 <strong>Grafana Admin/Editor</strong>로 대시보드 편집이 가능하면 추가 할당하지 않습니다. 두 역할 모두 없다면 아래 명령으로 이번 실습의 사용자 계정에 Admin을 부여합니다. Viewer는 화면 열기, Editor는 대시보드 편집용입니다. Agent 커넥터의 Viewer 선택은 아래에서 별도로 설정합니다. 역할은 구독 전체가 아니라 <strong>이 Grafana 인스턴스 하나</strong>에만 부여합니다. 실행 계정에는 이 scope의 Owner/User Access Administrator 등 역할 할당 권한이 필요합니다.</p>
 <pre><code>az role assignment create --assignee-object-id "$USER_PRINCIPAL" \
   --assignee-principal-type User --role "Grafana Admin" --scope "$GRAFANA_ID"</code></pre>
 <p><strong>No Grafana Role Assigned</strong> 화면은 로그인 계정의 Grafana 역할이 없거나 아직 전파되지 않았을 때 나타납니다. 새 인스턴스에서는 전파에 최대 1시간 걸릴 수 있습니다. 위 목록을 다시 조회해 역할이 있는지 확인한 뒤 브라우저에서 로그아웃·재로그인하거나 새 비공개 창으로 같은 계정에 로그인합니다. 계속 오류가 나면 <span class="path">Portal → amg-sre-kch01x7 → Access control (IAM) → Role assignments</span>에서 실제 사용자와 scope를 확인합니다. 역할이 이미 있다면 중복 추가하거나 인스턴스를 다시 만들지 않습니다.</p>
@@ -485,19 +485,30 @@ az role assignment create --assignee-object-id "$GRAFANA_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal --role "Log Analytics Reader" --scope "$WORKLOAD_RG_ID"
 az role assignment create --assignee-object-id "$GRAFANA_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal --role "Monitoring Reader" --scope "$WORKLOAD_RG_ID"</code></pre>
-</li><li><span class="path">Managed Grafana → Overview → Endpoint → Grafana UI → Connections → Data sources</span><strong>사용자 역할 전파 후</strong> Grafana를 엽니다. Azure Monitor data source에서 Managed Identity 인증과 workload 구독을 선택해 Save &amp; test합니다. 화면 접속 성공과 data source query 성공을 각각 확인합니다.</li><li><span class="path">Grafana → Dashboards → New → New dashboard → Add visualization</span>Azure Monitor → Logs에서 <code>law-aks-payment-kch01x7</code>를 선택합니다. 다음 query를 Time series 형식으로 넣고 제목 <code>Payment p95 by method</code>를 지정합니다.<pre><code>AppRequests
+</li><li><span class="path">Managed Grafana → Overview → Endpoint → Grafana UI → Connections → Data sources</span><strong>사용자 역할 전파 후</strong> Grafana를 엽니다. Azure Monitor data source에서 Managed Identity 인증과 workload 구독을 선택해 Save &amp; test합니다. 화면 접속 성공과 data source query 성공을 각각 확인합니다.</li><li><span class="path">Grafana → Dashboards → New → New dashboard → Add visualization</span>Azure Monitor → Logs에서 <code>law-aks-payment-kch01x7</code>를 선택합니다. <strong>쿼리 편집기의 Format as를 Time series</strong>로 지정하고 패널 시각화도 Time series를 선택합니다. 패널 제목은 <code>Payment p95 by method</code>, Unit은 <code>milliseconds (ms)</code>입니다.<pre><code>AppRequests
 | where $__timeFilter(TimeGenerated) and Name == "GET /pay"
 | extend method=tostring(Properties.paymentMethod)
 | summarize p95Ms=percentile(DurationMs, 95) by bin(TimeGenerated, 1m), method
-| order by TimeGenerated asc</code></pre></li><li>두 번째 panel 제목은 <code>Payment failures by method</code>입니다. 같은 data source와 Time series 형식으로 아래 쿼리를 넣습니다.
+| order by TimeGenerated asc</code></pre><p>적용 후 같은 대시보드로 돌아갑니다.</p></li><li><strong>같은 대시보드</strong>에서 Add → Visualization으로 두 번째 패널을 만듭니다. 제목은 <code>Payment failures by method</code>입니다. 같은 data source와 쿼리 <strong>Format as=Time series</strong>로 아래 쿼리를 넣습니다.
 <pre><code>AppRequests
 | where $__timeFilter(TimeGenerated) and Name == "GET /pay"
 | extend method=tostring(Properties.paymentMethod)
 | summarize failures=countif(Success == false) by bin(TimeGenerated, 1m), method
 | order by TimeGenerated asc</code></pre>
-<p>대시보드 이름 <code>payment service</code>로 저장합니다. Dashboard Settings → JSON model에서 uid와 각 panel의 id, datasource uid를 확인합니다.</p></li><li><span class="path">Grafana → Administration → Users and access → Service accounts → Add service account</span>이름 <code>payment-mcp-kch01x7</code>, role <strong>Viewer</strong>로 만들고 token 만료는 <strong>1 day</strong>로 지정합니다. token은 처음 표시될 때만 저장할 수 있으며 Git·채팅·스크린샷에 넣지 않습니다.</li><li><span class="path">SRE Agent → Builder → Connectors → Add → MCP Server</span>Name <code>payment-grafana</code>, transport <strong>Streamable-HTTP</strong>, URL은 Azure Portal Overview의 실제 Grafana Endpoint 뒤에 <code>/api/azure-mcp</code>를 붙입니다. Custom header 이름은 <code>Authorization</code>, 값은 <code>Bearer </code> 뒤에 방금 발급한 token입니다. Dashboard 조회와 data source query 도구를 연결하고 다음을 요청합니다.
+<p>대시보드 이름 <code>payment service</code>로 저장합니다. 이미 다른 이름으로 만들었다면 그대로 사용하고 이후 질문의 대시보드 이름만 맞춥니다. 카드·계좌 데이터가 모두 있는 구간에서 범례가 각 수단을 구분하는지 확인합니다. Dashboard Settings → JSON model에서 uid와 각 panel의 id, datasource uid를 확인합니다.</p></li>
+<li id="grafana-native-connector"><span class="path">SRE Agent → 커넥터 → 커넥터 추가 → Azure Managed Grafana</span><strong>MCP Server가 아니라 Azure Managed Grafana</strong>를 선택합니다. 커넥터 설정 화면에서 아래 값을 지정합니다.
+<div class="table-wrap"><table id="grafana-connector-values"><thead><tr><th>필드</th><th>입력/선택할 값</th></tr></thead><tbody>
+<tr><td>이름 / Name</td><td><code>payment-grafana</code></td></tr>
+<tr><td>구독 / Subscription</td><td>위 Grafana를 생성한 자신의 workload 구독</td></tr>
+<tr><td>리소스 그룹 / Resource group</td><td><code>rg-payment-grafana-kch01x7</code></td></tr>
+<tr><td>Grafana instance</td><td><code>amg-sre-kch01x7</code></td></tr>
+<tr><td>Access level</td><td><strong>Viewer (read-only)</strong></td></tr>
+</tbody></table></div>
+<p>위 입력값은 현재 전용 커넥터 화면 기준입니다. 이 화면에서는 MCP endpoint·Authorization header·service account token을 직접 입력하지 않습니다. 사용자 계정의 Grafana Admin, Grafana 관리 ID의 LAW 읽기 권한, Agent가 Grafana를 조회하는 Viewer 권한은 서로 다른 권한입니다. Viewer 선택이 LAW 권한까지 부여한다고 가정하지 않습니다.</p>
+<p><strong>다음 → 검토 + 연결 테스트</strong>에서 선택한 인스턴스와 테스트 결과를 확인합니다. 권한 오류가 나면 해당 화면이 사용하는 Agent 실행 ID와 Grafana Viewer 역할의 실제 적용 여부를 IAM에서 확인합니다. 저장 시 자동 할당되는지는 화면의 역할 안내와 실제 할당 결과로 확인합니다. 이어서 <strong>도구 선택</strong>에서 표시되는 대시보드 검색·조회용 읽기 도구를 선택하고, 데이터 조회 도구도 제공되면 선택한 뒤 완료합니다. 쓰기 도구를 위해 Editor를 선택할 필요는 없습니다. 이미 별도의 Grafana MCP 커넥터를 만들었다면 전용 커넥터의 실제 조회 성공을 확인한 뒤 기존 MCP 연결을 Disable해 중복 도구를 피합니다.</p>
+</li><li>새 Agent chat에서 다음을 요청합니다. 다른 대시보드 이름을 사용했다면 그 이름으로 바꿉니다.
 <pre class="prompt"><code>payment service 대시보드의 패널과 쿼리를 설명해 줘.</code></pre>
-</li><li>Lab 2의 카드 지연을 만든 뒤 다음 질문을 입력해 실제 data source 조회를 확인합니다. 실습 후 healthy 복구, token 폐기, connector Disable을 합니다.
+</li><li>Lab 2의 카드 지연을 만든 뒤 다음 질문을 입력하고, 대시보드 정의와 실제 관측 데이터가 조사에 사용되는지 확인합니다. Grafana 도구가 패널의 KQL 정의를 읽는 것과 Log Analytics에서 KQL을 실행하는 것은 다릅니다. 실제 통계는 도구 결과의 원본·쿼리·시간 구간을 확인하며 기존 LAW 연결을 유지합니다. 실습 후 healthy로 복구합니다. 더 사용하지 않는 커넥터는 Disable하고, 이전 MCP 경로에서 따로 만든 token이 있다면 더 이상 사용되지 않는지 확인한 후 폐기합니다.
 <pre class="prompt"><code>카드 결제가 느리다는 보고가 있어. 원인과 영향 범위를 조사해 줘.</code></pre>
 </li></ol>
 <p class="sources">참고 문서: <a href="https://learn.microsoft.com/en-us/azure/sre-agent/connectors">커넥터</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/global-tools-page">도구</a><a href="https://learn.microsoft.com/en-us/azure/sre-agent/default-agent-override-info">기본 도구 설정과 Custom Agent 설정 위치</a><a href="https://learn.microsoft.com/en-us/azure/managed-grafana/grafana-mcp-server">Grafana MCP</a></p>

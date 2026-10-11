@@ -141,6 +141,9 @@ bash scripts/monitoring.sh "$RG" "$CLUSTER" audit
 - Azure Monitor 경고 수집은 구독 범위입니다. 관리 RG의 조사 권한과 response plan의 선택 필터는 별개입니다.
 
 Grafana/Key Vault는 선택 실습이며 추가 비용과 역할 할당 권한이 필요합니다.
+Grafana는 SRE Agent의 **Azure Managed Grafana 전용 커넥터**에서 기존 인스턴스와
+**Viewer (read-only)**를 선택합니다. 별도 MCP URL/service account token은 필요 없습니다.
+이미 만든 Grafana는 재배포하지 않고 사용합니다. 새 리소스 템플릿은 API key를 비활성화합니다.
 Key Vault의 `AGENT_PRINCIPAL`은 실제 connector 실행 UAMI의 Object ID를 지정합니다.
 PEM은 template에 넣지 않고 `az keyvault secret set --file ... -o none`으로 업로드합니다.
 
